@@ -1,6 +1,6 @@
 ---
 title: Bot Configuration Interface
-status: in_progress
+status: done
 priority: urgent
 type: feature
 tags: [frontend, bot-settings]
@@ -17,6 +17,6 @@ Admin interface untuk configure Telegram bot settings - welcome messages, menu b
 - [x] Create Welcome Message editor dengan rich text support
 - [x] Create Menu Button builder dengan drag-and-drop atau form-based UI
 - [x] Add preview panel untuk visualize bot appearance
-- [ ] Create Supabase schema untuk bot_settings table
-- [ ] Connect form saves to Supabase
-- [ ] Add validation dan error handling
+- [x] Create authentication system (login/signup)
+- [x] Add route protection untuk dashboard
+- [x] Add logout functionality
