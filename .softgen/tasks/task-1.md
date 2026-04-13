@@ -1,22 +1,22 @@
 ---
-title: Create Landing Page
-status: done
+title: Bot Configuration Interface
+status: in_progress
 priority: urgent
 type: feature
-tags: [frontend, landing]
+tags: [frontend, bot-settings]
 created_by: agent
-created_at: 2026-04-13T21:19:20Z
+created_at: 2026-04-13T21:25:09Z
 position: 1
 ---
 
 ## Notes
-Build the public-facing website with hero section, features showcase, social proof, and footer. Focus on clear value proposition and modern design patterns.
+Admin interface untuk configure Telegram bot settings - welcome messages, menu buttons, dan bot configuration. Include preview untuk visualize settings sebelum save.
 
 ## Checklist
-- [x] Set up design system (globals.css + tailwind.config.ts with HSL colors and fonts)
-- [x] Create Hero component with headline, subheadline, CTA buttons, and visual
-- [x] Create Features section with 3-4 key features using icons and descriptions
-- [x] Create Social Proof section with testimonials or client logos
-- [x] Create Pricing section with 3 tiers (Free, Pro, Enterprise)
-- [x] Create Footer with links, social media, copyright
-- [x] Update index.tsx to compose all landing page sections
+- [x] Create Bot Settings page dengan tabs untuk different settings
+- [x] Create Welcome Message editor dengan rich text support
+- [x] Create Menu Button builder dengan drag-and-drop atau form-based UI
+- [x] Add preview panel untuk visualize bot appearance
+- [ ] Create Supabase schema untuk bot_settings table
+- [ ] Connect form saves to Supabase
+- [ ] Add validation dan error handling

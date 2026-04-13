@@ -1,20 +1,22 @@
 ---
-title: Create Authentication Pages
+title: Broadcast System
 status: todo
-priority: medium
+priority: high
 type: feature
-tags: [frontend, auth]
+tags: [frontend, broadcast]
 created_by: agent
-created_at: 2026-04-13T21:19:20Z
+created_at: 2026-04-13T21:25:09Z
 position: 3
 ---
 
 ## Notes
-Build login, signup, and password reset pages ready for Supabase integration. Clean forms with proper validation and error states.
+Sistem untuk broadcast messages ke private chats, groups, dan channels. Support scheduling, targeting, dan message templates.
 
 ## Checklist
-- [ ] Create Login page with email/password form
-- [ ] Create Signup page with email/password/confirm form
-- [ ] Create Password Reset page with email input
-- [ ] Add form validation and error handling
-- [ ] Style auth pages consistently with landing page design
+- [ ] Create Broadcast composer dengan rich text editor
+- [ ] Add targeting options (all users, specific groups, channels)
+- [ ] Create scheduling system untuk delayed broadcasts
+- [ ] Add message templates library
+- [ ] Create broadcast history dengan stats (delivered, read, clicked)
+- [ ] Create Supabase schema untuk broadcasts table
+- [ ] Add progress tracking untuk ongoing broadcasts

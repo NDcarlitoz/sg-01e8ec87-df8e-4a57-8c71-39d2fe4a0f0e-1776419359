@@ -1,25 +1,77 @@
-# SaaS Dashboard Platform
+# Telegram Automation Bot Admin Dashboard
 
 ## Vision
-A modern, professional SaaS platform combining a marketing website with a full-featured dashboard for data management and analytics. Designed for teams who value clarity and efficiency.
+Platform admin untuk manage Telegram automation bot dengan features lengkap - bot configuration, group management, broadcast system, affiliate tracking, leads management, dan analytics. Built untuk admin yang mahukan full control tanpa perlu coding.
 
 ## Design
-Color palette (HSL format for Tailwind):
-- `--primary: 221 69% 33%` (deep indigo)
-- `--accent: 217 91% 60%` (bright blue)
+Color palette (HSL format):
+- `--primary: 221 69% 33%` (deep indigo - professional)
+- `--accent: 217 91% 60%` (bright blue - interactive)
+- `--success: 142 76% 36%` (green - positive actions)
+- `--warning: 38 92% 50%` (amber - alerts)
 - `--background: 0 0% 100%` (clean white)
-- `--foreground: 222 47% 11%` (near-black)
-- `--muted: 210 40% 96%` (light gray)
-- `--card: 0 0% 100%` (white cards)
+- `--foreground: 222 47% 11%` (near-black text)
+- `--muted: 210 40% 96%` (light gray backgrounds)
 - `--border: 214 32% 91%` (subtle borders)
 
 Typography:
-- Headings: Plus Jakarta Sans (600, 700 weights)
-- Body: Work Sans (400, 500, 600 weights)
+- Headings: Plus Jakarta Sans (600, 700)
+- Body: Work Sans (400, 500, 600)
 
-Style direction: Linear-inspired minimalism — generous whitespace, subtle shadows for depth, clean geometric layouts, professional without being corporate.
+Style direction: Modern admin dashboard dengan Telegram-inspired accents - clean, functional, data-dense tapi organized dengan clear visual hierarchy.
 
 ## Features
-- **Landing Page**: Hero with value proposition, feature showcase, social proof, pricing tiers, footer
-- **Dashboard**: Sidebar navigation, stats overview, data tables, charts, settings
-- **Authentication Flow**: Login, signup, password reset pages (ready for Supabase integration)
+- **Bot Settings**: Configure welcome messages, menu buttons, auto-replies
+- **Group Management**: Monitor groups/channels, manage members, auto-moderation
+- **Broadcast System**: Send targeted messages dengan scheduling ke private/groups/channels
+- **Affiliate System**: Track referrals, manage commissions, generate referral links
+- **Leads Management**: Capture user data, segmentation, export functionality
+- **Analytics**: Real-time stats, growth charts, engagement metrics, custom reports
+]]></create_file>
+  <full_file_rewrite file_path="src/styles/globals.css"><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 69% 33%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 69% 33%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Work Sans', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}

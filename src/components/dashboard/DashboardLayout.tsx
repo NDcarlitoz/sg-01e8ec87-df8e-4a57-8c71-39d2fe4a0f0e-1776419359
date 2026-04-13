@@ -12,15 +12,25 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, BarChart3, Database, Settings, Users } from "lucide-react";
+import { 
+  Bot, 
+  Users, 
+  Radio, 
+  TrendingUp, 
+  UserCheck, 
+  BarChart3,
+  Settings 
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
 const menuItems = [
-  { title: "Overview", icon: Home, href: "/dashboard" },
+  { title: "Bot Settings", icon: Bot, href: "/dashboard" },
+  { title: "Groups", icon: Users, href: "/dashboard/groups" },
+  { title: "Broadcast", icon: Radio, href: "/dashboard/broadcast" },
+  { title: "Affiliates", icon: TrendingUp, href: "/dashboard/affiliates" },
+  { title: "Leads", icon: UserCheck, href: "/dashboard/leads" },
   { title: "Analytics", icon: BarChart3, href: "/dashboard/analytics" },
-  { title: "Data", icon: Database, href: "/dashboard/data" },
-  { title: "Team", icon: Users, href: "/dashboard/team" },
   { title: "Settings", icon: Settings, href: "/dashboard/settings" },
 ];
 
@@ -39,8 +49,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-6">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-primary" />
-                  <span className="font-heading text-lg font-bold">Dashboard</span>
+                  <Bot className="h-8 w-8 text-primary" />
+                  <span className="font-heading text-lg font-bold">Telegram Bot</span>
                 </div>
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -65,6 +75,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-full bg-success/10 px-3 py-1">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
+                <span className="text-sm font-medium text-success">Bot Active</span>
+              </div>
+            </div>
           </header>
           <main className="flex-1 p-6">
             {children}

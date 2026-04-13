@@ -1,20 +1,20 @@
 ---
-title: Build Dashboard Interface
-status: done
+title: Group Management System
+status: todo
 priority: high
 type: feature
-tags: [frontend, dashboard]
+tags: [frontend, groups]
 created_by: agent
-created_at: 2026-04-13T21:19:20Z
+created_at: 2026-04-13T21:25:09Z
 position: 2
 ---
 
 ## Notes
-Create the main dashboard interface with sidebar navigation, stats overview, and data management features. Use shadcn sidebar component for consistent navigation.
+Interface untuk monitor dan manage Telegram groups dan channels yang bot join. Track member count, activity, dan group settings.
 
 ## Checklist
-- [x] Create Dashboard layout with sidebar navigation (using shadcn sidebar)
-- [x] Create Overview page with key metrics cards and charts
-- [x] Create Data table component with sorting, filtering, search
-- [x] Create Settings page for user preferences
-- [x] Add dashboard routing structure in pages/dashboard/
+- [ ] Create Groups listing page dengan search dan filters
+- [ ] Create Group detail page dengan stats dan members
+- [ ] Add group settings editor (permissions, auto-moderation)
+- [ ] Create Supabase schema untuk groups table
+- [ ] Add real-time updates untuk group stats
