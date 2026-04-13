@@ -14,33 +14,34 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { 
-  Bot, 
-  Users, 
-  Radio, 
-  TrendingUp, 
-  UserCheck, 
-  BarChart3,
+import {
   Settings,
-  LogOut
+  BarChart3,
+  Send,
+  Users,
+  MessageSquare,
+  DollarSign,
+  LogOut,
+  User,
+  Bot,
 } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { authService } from "@/services/authService";
-
-const menuItems = [
-  { title: "Bot Settings", icon: Bot, href: "/dashboard" },
-  { title: "Groups", icon: Users, href: "/dashboard/groups" },
-  { title: "Broadcast", icon: Radio, href: "/dashboard/broadcast" },
-  { title: "Affiliates", icon: TrendingUp, href: "/dashboard/affiliates" },
-  { title: "Leads", icon: UserCheck, href: "/dashboard/leads" },
-  { title: "Analytics", icon: BarChart3, href: "/dashboard/analytics" },
-  { title: "Settings", icon: Settings, href: "/dashboard/settings" },
-];
+import { Button } from "@/components/ui/button";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
+
+const navigation = [
+  { name: "Bot Settings", href: "/dashboard", icon: Bot },
+  { name: "Groups", href: "/dashboard/groups", icon: Users },
+  { name: "Broadcast", href: "/dashboard/broadcast", icon: Send },
+  { name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign },
+  { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Profile", href: "/dashboard/profile", icon: User },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
@@ -56,32 +57,44 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-6">
+              <SidebarGroupLabel className="px-4 py-4">
                 <div className="flex items-center gap-2">
-                  <Bot className="h-8 w-8 text-primary" />
+                  <Bot className="h-5 w-5 text-accent" />
                   <span className="font-heading text-lg font-bold">Telegram Bot</span>
                 </div>
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={router.pathname === item.href}>
-                        <Link href={item.href}>
+                  {navigation.map((item) => {
+                    const isActive = router.pathname === item.href;
+                    return (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton
+                          onClick={() => router.push(item.href)}
+                          isActive={isActive}
+                          className="w-full"
+                        >
                           <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                          <span>{item.name}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+          
           <SidebarFooter className="border-t p-4">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-muted-foreground hover:text-destructive"
+            <div className="mb-3 rounded-lg bg-success/10 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
+                <span className="text-sm font-medium text-success">Bot Active</span>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -94,12 +107,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-full bg-success/10 px-3 py-1">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
-                <span className="text-sm font-medium text-success">Bot Active</span>
-              </div>
-            </div>
           </header>
           <main className="flex-1 p-6">
             {children}
