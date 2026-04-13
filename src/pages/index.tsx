@@ -1,4 +1,8 @@
 import { Hero } from "@/components/landing/Hero";
+import { Features } from "@/components/landing/Features";
+import { SocialProof } from "@/components/landing/SocialProof";
+import { Pricing } from "@/components/landing/Pricing";
+import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
 
 export default function Home() {
@@ -10,6 +14,10 @@ export default function Home() {
       />
       <main className="min-h-screen">
         <Hero />
+        <Features />
+        <SocialProof />
+        <Pricing />
+        <Footer />
       </main>
     </>
   );

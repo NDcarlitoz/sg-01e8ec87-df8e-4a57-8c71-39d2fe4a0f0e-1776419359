@@ -1,6 +1,6 @@
 ---
 title: Create Landing Page
-status: in_progress
+status: done
 priority: urgent
 type: feature
 tags: [frontend, landing]
@@ -15,8 +15,8 @@ Build the public-facing website with hero section, features showcase, social pro
 ## Checklist
 - [x] Set up design system (globals.css + tailwind.config.ts with HSL colors and fonts)
 - [x] Create Hero component with headline, subheadline, CTA buttons, and visual
-- [ ] Create Features section with 3-4 key features using icons and descriptions
-- [ ] Create Social Proof section with testimonials or client logos
-- [ ] Create Pricing section with 3 tiers (Free, Pro, Enterprise)
-- [ ] Create Footer with links, social media, copyright
-- [ ] Update index.tsx to compose all landing page sections
+- [x] Create Features section with 3-4 key features using icons and descriptions
+- [x] Create Social Proof section with testimonials or client logos
+- [x] Create Pricing section with 3 tiers (Free, Pro, Enterprise)
+- [x] Create Footer with links, social media, copyright
+- [x] Update index.tsx to compose all landing page sections
