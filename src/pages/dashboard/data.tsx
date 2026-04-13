@@ -3,10 +3,11 @@ import { DataTable } from "@/components/dashboard/DataTable";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 export default function DataPage() {
   return (
-    <>
+    <ProtectedRoute>
       <SEO title="Data Management" />
       <DashboardLayout>
         <div className="space-y-6">
@@ -24,6 +25,6 @@ export default function DataPage() {
           <DataTable />
         </div>
       </DashboardLayout>
-    </>
+    </ProtectedRoute>
   );
 }

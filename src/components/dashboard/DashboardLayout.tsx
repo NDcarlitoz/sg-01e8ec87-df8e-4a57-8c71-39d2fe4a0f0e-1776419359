@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useRouter } from "next/router";
 import {
   Sidebar,
   SidebarContent,
@@ -11,6 +12,7 @@ import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { 
   Bot, 
@@ -19,10 +21,12 @@ import {
   TrendingUp, 
   UserCheck, 
   BarChart3,
-  Settings 
+  Settings,
+  LogOut
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { Button } from "@/components/ui/button";
+import { authService } from "@/services/authService";
 
 const menuItems = [
   { title: "Bot Settings", icon: Bot, href: "/dashboard" },
@@ -40,6 +44,11 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
+
+  const handleLogout = async () => {
+    await authService.signOut();
+    router.push("/login");
+  };
 
   return (
     <SidebarProvider>
@@ -69,6 +78,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+          <SidebarFooter className="border-t p-4">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </Button>
+          </SidebarFooter>
         </Sidebar>
 
         <SidebarInset className="flex-1">

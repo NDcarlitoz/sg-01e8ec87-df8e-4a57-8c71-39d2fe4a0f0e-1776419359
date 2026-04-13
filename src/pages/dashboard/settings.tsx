@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 export default function SettingsPage() {
   return (
-    <>
+    <ProtectedRoute>
       <SEO title="Settings" />
       <DashboardLayout>
         <div className="max-w-3xl space-y-6">
@@ -101,6 +102,6 @@ export default function SettingsPage() {
           </Card>
         </div>
       </DashboardLayout>
-    </>
+    </ProtectedRoute>
   );
 }
