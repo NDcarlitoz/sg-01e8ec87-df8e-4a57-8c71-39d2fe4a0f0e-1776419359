@@ -20,3 +20,4 @@ Admin interface untuk configure Telegram bot settings - welcome messages, menu b
 - [x] Create authentication system (login/signup)
 - [x] Add route protection untuk dashboard
 - [x] Add logout functionality
+- [x] Create profile page dengan avatar upload
