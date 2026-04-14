@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Hash, Plus, Pencil, Trash2, Users, TrendingUp } from "lucide-react";
+import { Hash, Plus, Pencil, Trash2, Users, TrendingUp, RefreshCw } from "lucide-react";
 import { channelService } from "@/services/channelService";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -199,6 +199,41 @@ export default function ChannelsPage() {
     }
   };
 
+  const syncChannelWithTelegram = async (channelId: string, telegramChannelId: string) => {
+    try {
+      const response = await fetch("/api/telegram/get-chat-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId: telegramChannelId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch channel info from Telegram");
+      }
+
+      const { data } = await response.json();
+      
+      if (data.members_count !== null) {
+        await channelService.updateChannel(channelId, {
+          subscriber_count: data.members_count,
+        });
+        
+        toast({
+          title: "Success",
+          description: "Channel synced with Telegram successfully",
+        });
+        
+        loadChannels();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to sync with Telegram",
+        variant: "destructive",
+      });
+    }
+  };
+
   const openEditDialog = (channel: Channel) => {
     setSelectedChannel(channel);
     setFormData({
@@ -352,7 +387,7 @@ export default function ChannelsPage() {
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={channel.is_active}
-                              onCheckedChange={() => handleToggleStatus(channel)}
+                              onCheckedChange={(checked) => handleToggleStatus(channel.id, checked)}
                             />
                             <Badge variant={channel.is_active ? "default" : "secondary"}>
                               {channel.is_active ? "Active" : "Inactive"}
@@ -360,19 +395,33 @@ export default function ChannelsPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openEditDialog(channel)}
+                              onClick={() => syncChannelWithTelegram(channel.id, channel.channel_id)}
+                              className="h-8 w-8 p-0"
+                              title="Sync with Telegram"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                            <Switch
+                              checked={channel.is_active}
+                              onCheckedChange={(checked) => handleToggleStatus(channel.id, checked)}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(channel)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openDeleteDialog(channel)}
-                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteClick(channel)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

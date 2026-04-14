@@ -1,108 +1,118 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-export type BotToken = Tables<"bot_tokens">;
-
 export const botTokenService = {
-  // Get all bot tokens for current user
-  async getBotTokens() {
+  /**
+   * Get all bot tokens for current user
+   */
+  async getBotTokens(): Promise<{ data: Tables<"bot_tokens">[] | null; error: string | null }> {
     const { data, error } = await supabase
       .from("bot_tokens")
       .select("*")
       .order("created_at", { ascending: false });
 
-    console.log("getBotTokens:", { data, error });
-    return { data: data || [], error };
+    return { data, error: error?.message || null };
   },
 
-  // Get single bot token
-  async getBotToken(id: string) {
-    const { data, error } = await supabase
-      .from("bot_tokens")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    console.log("getBotToken:", { data, error });
-    return { data, error };
-  },
-
-  // Create new bot token
-  async createBotToken(botData: {
+  /**
+   * Create new bot token with Telegram verification
+   */
+  async createBotToken(tokenData: {
     bot_name: string;
     bot_token: string;
     bot_username?: string;
-  }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { data: null, error: new Error("User not authenticated") };
+  }): Promise<{ data: Tables<"bot_tokens"> | null; error: string | null }> {
+    // Verify token with Telegram API first
+    const verifyResponse = await fetch("/api/telegram/get-bot-info", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ botToken: tokenData.bot_token }),
+    });
+
+    if (!verifyResponse.ok) {
+      const errorData = await verifyResponse.json();
+      return { data: null, error: errorData.error || "Invalid bot token" };
     }
 
+    const { data: botInfo } = await verifyResponse.json();
+
+    // Insert to database with verified bot info
     const { data, error } = await supabase
       .from("bot_tokens")
       .insert({
-        user_id: user.id,
-        bot_name: botData.bot_name,
-        bot_token: botData.bot_token,
-        bot_username: botData.bot_username,
-        is_active: true,
+        bot_name: tokenData.bot_name,
+        bot_token: tokenData.bot_token,
+        bot_username: tokenData.bot_username || botInfo.username || null,
       })
       .select()
       .single();
 
-    console.log("createBotToken:", { data, error });
-    return { data, error };
+    return { data, error: error?.message || null };
   },
 
-  // Update bot token
+  /**
+   * Update existing bot token
+   */
   async updateBotToken(
     id: string,
-    updates: {
-      bot_name?: string;
-      bot_token?: string;
+    tokenData: {
+      bot_name: string;
+      bot_token: string;
       bot_username?: string;
-      is_active?: boolean;
     }
-  ) {
+  ): Promise<{ data: Tables<"bot_tokens"> | null; error: string | null }> {
+    // Verify token with Telegram API first
+    const verifyResponse = await fetch("/api/telegram/get-bot-info", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ botToken: tokenData.bot_token }),
+    });
+
+    if (!verifyResponse.ok) {
+      const errorData = await verifyResponse.json();
+      return { data: null, error: errorData.error || "Invalid bot token" };
+    }
+
     const { data, error } = await supabase
       .from("bot_tokens")
-      .update(updates)
+      .update({
+        bot_name: tokenData.bot_name,
+        bot_token: tokenData.bot_token,
+        bot_username: tokenData.bot_username,
+      })
       .eq("id", id)
       .select()
       .single();
 
-    console.log("updateBotToken:", { data, error });
-    return { data, error };
+    return { data, error: error?.message || null };
   },
 
-  // Delete bot token
-  async deleteBotToken(id: string) {
+  /**
+   * Delete bot token
+   */
+  async deleteBotToken(id: string): Promise<{ error: string | null }> {
+    const { error } = await supabase.from("bot_tokens").delete().eq("id", id);
+
+    return { error: error?.message || null };
+  },
+
+  /**
+   * Toggle bot active status
+   */
+  async toggleBotStatus(id: string, isActive: boolean): Promise<{ error: string | null }> {
     const { error } = await supabase
       .from("bot_tokens")
-      .delete()
+      .update({ is_active: isActive })
       .eq("id", id);
 
-    console.log("deleteBotToken:", { error });
-    return { error };
+    return { error: error?.message || null };
   },
 
-  // Toggle bot active status
-  async toggleBotStatus(id: string, isActive: boolean) {
-    const { data, error } = await supabase
-      .from("bot_tokens")
-      .update({ is_active: isActive })
-      .eq("id", id)
-      .select()
-      .single();
-
-    console.log("toggleBotStatus:", { data, error });
-    return { data, error };
-  },
-
-  // Validate Telegram bot token format
+  /**
+   * Validate bot token format
+   */
   validateBotToken(token: string): boolean {
-    // Telegram bot token format: <bot_id>:<auth_token>
-    // Example: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+    // Telegram bot token format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
     const tokenRegex = /^\d+:[A-Za-z0-9_-]+$/;
     return tokenRegex.test(token);
   },
