@@ -56,6 +56,53 @@ export type Database = {
           },
         ]
       }
+      channels: {
+        Row: {
+          channel_id: string
+          channel_name: string
+          channel_username: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          subscriber_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          channel_name: string
+          channel_username: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          subscriber_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          channel_name?: string
+          channel_username?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          subscriber_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
