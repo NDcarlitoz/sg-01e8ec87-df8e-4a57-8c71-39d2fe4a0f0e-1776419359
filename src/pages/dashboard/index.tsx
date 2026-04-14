@@ -94,11 +94,11 @@ export default function BotSettings() {
     }
 
     setIsLoading(true);
-    const { error } = await botTokenService.createBotToken(
-      formData.bot_name,
-      formData.bot_token,
-      formData.bot_username
-    );
+    const { error } = await botTokenService.createBotToken({
+      bot_name: formData.bot_name,
+      bot_token: formData.bot_token,
+      bot_username: formData.bot_username
+    });
     setIsLoading(false);
 
     if (error) {
@@ -140,12 +140,11 @@ export default function BotSettings() {
     }
 
     setIsLoading(true);
-    const { error } = await botTokenService.updateBotToken(
-      selectedToken.id,
-      formData.bot_name,
-      formData.bot_token,
-      formData.bot_username
-    );
+    const { error } = await botTokenService.updateBotToken(selectedToken.id, {
+      bot_name: formData.bot_name,
+      bot_token: formData.bot_token,
+      bot_username: formData.bot_username
+    });
     setIsLoading(false);
 
     if (error) {
