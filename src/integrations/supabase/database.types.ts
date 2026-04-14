@@ -56,6 +56,57 @@ export type Database = {
           },
         ]
       }
+      broadcasts: {
+        Row: {
+          created_at: string | null
+          failed_count: number | null
+          id: string
+          message: string
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          target_ids: string[] | null
+          target_type: string
+          title: string
+          total_recipients: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          failed_count?: number | null
+          id?: string
+          message: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          target_ids?: string[] | null
+          target_type: string
+          title: string
+          total_recipients?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          failed_count?: number | null
+          id?: string
+          message?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          target_ids?: string[] | null
+          target_type?: string
+          title?: string
+          total_recipients?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       channels: {
         Row: {
           channel_id: string
