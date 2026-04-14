@@ -22,4 +22,6 @@ Admin interface untuk configure Telegram bot settings - welcome messages, menu b
 - [x] Add logout functionality
 - [x] Create profile page dengan avatar upload
 - [x] Create Bot Token Management (add/edit/delete tokens)
-- [x] Add token validation dan status toggle
+- [x] Add token validation dengan Telegram API
+- [x] Integrate Telegram Bot API untuk control bot dari dashboard
+- [x] Add channel sync functionality dengan real-time data
