@@ -22,6 +22,13 @@ export const botTokenService = {
     bot_token: string;
     bot_username?: string;
   }): Promise<{ data: Tables<"bot_tokens"> | null; error: string | null }> {
+    const { data: authData } = await supabase.auth.getSession();
+    const userId = authData.session?.user.id;
+    
+    if (!userId) {
+      return { data: null, error: "Authentication required" };
+    }
+
     // Verify token with Telegram API first
     const verifyResponse = await fetch("/api/telegram/get-bot-info", {
       method: "POST",
@@ -43,6 +50,7 @@ export const botTokenService = {
         bot_name: tokenData.bot_name,
         bot_token: tokenData.bot_token,
         bot_username: tokenData.bot_username || botInfo.username || null,
+        user_id: userId,
       })
       .select()
       .single();

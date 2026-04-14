@@ -387,7 +387,7 @@ export default function ChannelsPage() {
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={channel.is_active}
-                              onCheckedChange={(checked) => handleToggleStatus(channel.id, checked)}
+                              onCheckedChange={() => handleToggleStatus(channel)}
                             />
                             <Badge variant={channel.is_active ? "default" : "secondary"}>
                               {channel.is_active ? "Active" : "Inactive"}
@@ -407,20 +407,20 @@ export default function ChannelsPage() {
                             </Button>
                             <Switch
                               checked={channel.is_active}
-                              onCheckedChange={(checked) => handleToggleStatus(channel.id, checked)}
+                              onCheckedChange={() => handleToggleStatus(channel)}
                             />
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleEdit(channel)}
+                              onClick={() => openEditDialog(channel)}
                               className="h-8 w-8 p-0"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteClick(channel)}
+                              onClick={() => openDeleteDialog(channel)}
                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
