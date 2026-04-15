@@ -1,7 +1,105 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
+// Currency symbols and formatting
+export const CURRENCIES = {
+  USD: { symbol: "$", name: "US Dollar", decimals: 2 },
+  EUR: { symbol: "€", name: "Euro", decimals: 2 },
+  GBP: { symbol: "£", name: "British Pound", decimals: 2 },
+  JPY: { symbol: "¥", name: "Japanese Yen", decimals: 0 },
+  CNY: { symbol: "¥", name: "Chinese Yuan", decimals: 2 },
+  AUD: { symbol: "A$", name: "Australian Dollar", decimals: 2 },
+  CAD: { symbol: "C$", name: "Canadian Dollar", decimals: 2 },
+  CHF: { symbol: "Fr", name: "Swiss Franc", decimals: 2 },
+  HKD: { symbol: "HK$", name: "Hong Kong Dollar", decimals: 2 },
+  SGD: { symbol: "S$", name: "Singapore Dollar", decimals: 2 },
+  MYR: { symbol: "RM", name: "Malaysian Ringgit", decimals: 2 },
+  IDR: { symbol: "Rp", name: "Indonesian Rupiah", decimals: 0 },
+  THB: { symbol: "฿", name: "Thai Baht", decimals: 2 },
+  VND: { symbol: "₫", name: "Vietnamese Dong", decimals: 0 },
+  PHP: { symbol: "₱", name: "Philippine Peso", decimals: 2 },
+  INR: { symbol: "₹", name: "Indian Rupee", decimals: 2 },
+  KRW: { symbol: "₩", name: "South Korean Won", decimals: 0 },
+  BRL: { symbol: "R$", name: "Brazilian Real", decimals: 2 },
+  MXN: { symbol: "Mex$", name: "Mexican Peso", decimals: 2 },
+  AED: { symbol: "د.إ", name: "UAE Dirham", decimals: 2 },
+  SAR: { symbol: "﷼", name: "Saudi Riyal", decimals: 2 },
+  ZAR: { symbol: "R", name: "South African Rand", decimals: 2 },
+  RUB: { symbol: "₽", name: "Russian Ruble", decimals: 2 },
+  TRY: { symbol: "₺", name: "Turkish Lira", decimals: 2 },
+  PLN: { symbol: "zł", name: "Polish Zloty", decimals: 2 },
+  SEK: { symbol: "kr", name: "Swedish Krona", decimals: 2 },
+  NOK: { symbol: "kr", name: "Norwegian Krone", decimals: 2 },
+  DKK: { symbol: "kr", name: "Danish Krone", decimals: 2 },
+  NZD: { symbol: "NZ$", name: "New Zealand Dollar", decimals: 2 },
+  TWD: { symbol: "NT$", name: "Taiwan Dollar", decimals: 2 },
+} as const;
+
+export type CurrencyCode = keyof typeof CURRENCIES;
+
 export const affiliateService = {
+  /**
+   * Format amount with currency
+   */
+  formatCurrency(amount: number, currency: string = "USD"): string {
+    const currencyInfo = CURRENCIES[currency as CurrencyCode] || CURRENCIES.USD;
+    const decimals = currencyInfo.decimals;
+    const formatted = amount.toFixed(decimals);
+    return `${currencyInfo.symbol}${formatted}`;
+  },
+
+  /**
+   * Get currency symbol
+   */
+  getCurrencySymbol(currency: string = "USD"): string {
+    return CURRENCIES[currency as CurrencyCode]?.symbol || "$";
+  },
+
+  /**
+   * Get all supported currencies
+   */
+  getSupportedCurrencies(): Array<{ code: string; name: string; symbol: string }> {
+    return Object.entries(CURRENCIES).map(([code, info]) => ({
+      code,
+      name: info.name,
+      symbol: info.symbol,
+    }));
+  },
+
+  /**
+   * Convert amount between currencies
+   */
+  async convertCurrency(
+    amount: number,
+    fromCurrency: string,
+    toCurrency: string
+  ): Promise<{ convertedAmount: number; rate: number; error: string | null }> {
+    if (fromCurrency === toCurrency) {
+      return { convertedAmount: amount, rate: 1, error: null };
+    }
+
+    const { data, error } = await supabase
+      .from("currency_exchange_rates")
+      .select("rate")
+      .eq("from_currency", fromCurrency)
+      .eq("to_currency", toCurrency)
+      .single();
+
+    if (error || !data) {
+      return {
+        convertedAmount: amount,
+        rate: 1,
+        error: "Exchange rate not found",
+      };
+    }
+
+    return {
+      convertedAmount: amount * data.rate,
+      rate: data.rate,
+      error: null,
+    };
+  },
+
   /**
    * Get all affiliate programs
    */
@@ -42,17 +140,19 @@ export const affiliateService = {
   },
 
   /**
-   * Create new affiliate
+   * Create new affiliate with preferred currency
    */
   async createAffiliate(data: {
     user_id: string;
     program_id: string;
     referral_code: string;
+    preferred_currency?: string;
   }): Promise<{ error: string | null }> {
     const { error } = await supabase.from("affiliates").insert({
       user_id: data.user_id,
       program_id: data.program_id,
       referral_code: data.referral_code,
+      preferred_currency: data.preferred_currency || "USD",
     });
 
     return { error: error?.message || null };

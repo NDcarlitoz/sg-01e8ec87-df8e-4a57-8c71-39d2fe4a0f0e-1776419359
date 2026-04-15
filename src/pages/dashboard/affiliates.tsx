@@ -7,16 +7,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { affiliateService } from "@/services/affiliateService";
+import { affiliateService, CURRENCIES, type CurrencyCode } from "@/services/affiliateService";
 import type { Tables } from "@/integrations/supabase/types";
-import { DollarSign, Users, TrendingUp, CreditCard, Link as LinkIcon } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Link as LinkIcon, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AffiliatesPage() {
   const { toast } = useToast();
   const [stats, setStats] = useState<any>(null);
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
 
   useEffect(() => {
     loadData();
@@ -43,6 +51,12 @@ export default function AffiliatesPage() {
     }
   };
 
+  const formatAmount = (amount: number, currency: string = "USD") => {
+    return affiliateService.formatCurrency(amount, currency);
+  };
+
+  const currencyOptions = affiliateService.getSupportedCurrencies();
+
   return (
     <ProtectedRoute>
       <SEO title="Affiliates - Dashboard" description="Manage affiliate programs and payouts" />
@@ -53,7 +67,25 @@ export default function AffiliatesPage() {
               <h1 className="font-heading text-3xl font-bold">Affiliate System</h1>
               <p className="text-muted-foreground mt-1">Track referrals, commissions, and manage payouts</p>
             </div>
-            <DollarSign className="h-10 w-10 text-primary" />
+            <div className="flex items-center gap-3">
+              <Globe className="h-5 w-5 text-muted-foreground" />
+              <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((curr) => (
+                    <SelectItem key={curr.code} value={curr.code}>
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono">{curr.symbol}</span>
+                        <span>{curr.code}</span>
+                        <span className="text-muted-foreground text-xs">({curr.name})</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -73,13 +105,15 @@ export default function AffiliatesPage() {
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                 <TrendingUp className="h-4 w-4" /> Total Commissions
               </div>
-              <div className="text-3xl font-bold">${stats?.total_commissions?.toFixed(2) || '0.00'}</div>
+              <div className="text-3xl font-bold">{formatAmount(stats?.total_commissions || 0, selectedCurrency)}</div>
+              <div className="text-xs text-muted-foreground mt-1">in {selectedCurrency}</div>
              </Card>
              <Card className="p-5 flex flex-col justify-center border-l-4 border-l-warning">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                 <CreditCard className="h-4 w-4" /> Pending Payouts
               </div>
-              <div className="text-3xl font-bold text-warning">${stats?.pending_payouts?.toFixed(2) || '0.00'}</div>
+              <div className="text-3xl font-bold text-warning">{formatAmount(stats?.pending_payouts || 0, selectedCurrency)}</div>
+              <div className="text-xs text-muted-foreground mt-1">in {selectedCurrency}</div>
              </Card>
           </div>
 
@@ -103,6 +137,7 @@ export default function AffiliatesPage() {
                       <TableRow>
                         <TableHead>Affiliate Name</TableHead>
                         <TableHead>Referral Code</TableHead>
+                        <TableHead>Currency</TableHead>
                         <TableHead>Total Referrals</TableHead>
                         <TableHead>Total Earnings</TableHead>
                         <TableHead>Pending Payout</TableHead>
@@ -114,9 +149,18 @@ export default function AffiliatesPage() {
                         <TableRow key={aff.id}>
                           <TableCell className="font-medium">{aff.profile?.full_name || 'Unknown User'}</TableCell>
                           <TableCell><code className="bg-muted px-2 py-1 rounded text-xs">{aff.referral_code}</code></TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono">
+                              {affiliateService.getCurrencySymbol(aff.preferred_currency || "USD")} {aff.preferred_currency || "USD"}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{aff.total_referrals}</TableCell>
-                          <TableCell className="text-success font-semibold">${aff.total_earnings?.toFixed(2) || '0.00'}</TableCell>
-                          <TableCell className="text-warning">${aff.pending_payout?.toFixed(2) || '0.00'}</TableCell>
+                          <TableCell className="text-success font-semibold">
+                            {formatAmount(aff.total_earnings || 0, aff.preferred_currency || "USD")}
+                          </TableCell>
+                          <TableCell className="text-warning">
+                            {formatAmount(aff.pending_payout || 0, aff.preferred_currency || "USD")}
+                          </TableCell>
                           <TableCell>
                             <Badge variant={aff.is_active ? "default" : "secondary"}>
                               {aff.is_active ? "Active" : "Inactive"}
@@ -144,6 +188,7 @@ export default function AffiliatesPage() {
                       <TableRow>
                         <TableHead>Affiliate</TableHead>
                         <TableHead>Amount</TableHead>
+                        <TableHead>Currency</TableHead>
                         <TableHead>Payment Method</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Requested Date</TableHead>
@@ -154,7 +199,12 @@ export default function AffiliatesPage() {
                       {payouts.map(p => (
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.affiliate?.profile?.full_name || 'Unknown'}</TableCell>
-                          <TableCell className="font-bold">${p.amount.toFixed(2)}</TableCell>
+                          <TableCell className="font-bold">{formatAmount(p.amount, p.currency)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono">
+                              {affiliateService.getCurrencySymbol(p.currency)} {p.currency}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             <div className="capitalize">{p.payment_method}</div>
                             {p.payment_details && (

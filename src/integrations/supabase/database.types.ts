@@ -216,6 +216,7 @@ export type Database = {
           joined_at: string | null
           lifetime_payouts: number | null
           pending_payout: number | null
+          preferred_currency: string | null
           program_id: string | null
           referral_code: string
           total_earnings: number | null
@@ -230,6 +231,7 @@ export type Database = {
           joined_at?: string | null
           lifetime_payouts?: number | null
           pending_payout?: number | null
+          preferred_currency?: string | null
           program_id?: string | null
           referral_code: string
           total_earnings?: number | null
@@ -244,6 +246,7 @@ export type Database = {
           joined_at?: string | null
           lifetime_payouts?: number | null
           pending_payout?: number | null
+          preferred_currency?: string | null
           program_id?: string | null
           referral_code?: string
           total_earnings?: number | null
@@ -667,6 +670,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      currency_exchange_rates: {
+        Row: {
+          from_currency: string
+          id: string
+          rate: number
+          to_currency: string
+          updated_at: string | null
+        }
+        Insert: {
+          from_currency: string
+          id?: string
+          rate: number
+          to_currency: string
+          updated_at?: string | null
+        }
+        Update: {
+          from_currency?: string
+          id?: string
+          rate?: number
+          to_currency?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       force_join_channels: {
         Row: {
