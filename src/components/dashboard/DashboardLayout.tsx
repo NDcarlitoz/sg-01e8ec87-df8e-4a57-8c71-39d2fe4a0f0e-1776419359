@@ -33,6 +33,7 @@ import {
 import { authService } from "@/services/authService";
 import { affiliateService } from "@/services/affiliateService";
 import { Button } from "@/components/ui/button";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 import Link from "next/link";
 
 interface DashboardLayoutProps {
@@ -184,6 +185,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1" />
+            <ThemeSwitch />
           </header>
           <main className="flex-1 p-6">
             {children}
