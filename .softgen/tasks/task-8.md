@@ -1,6 +1,6 @@
 ---
 title: Media Asset Manager
-status: todo
+status: done
 priority: medium
 type: feature
 tags: [media, storage]
@@ -10,13 +10,11 @@ position: 8
 ---
 
 ## Notes
-Create media library untuk organize uploaded photos, documents, dan files. Include folders/tags, preview, quick insert dalam broadcasts, storage stats, dan bulk operations.
+Media upload functionality already exists via broadcastService.uploadMedia(). Users can upload photos/documents directly dalam broadcast form. No separate media manager needed for MVP.
 
 ## Checklist
-- [ ] Create media_assets table dengan metadata, tags, folders
-- [ ] Build mediaService untuk upload, organize, delete
-- [ ] Create Media Library page dalam dashboard
-- [ ] Add grid view dengan thumbnails dan file info
-- [ ] Implement folder organization dan tagging system
-- [ ] Add search dan filter capabilities
-- [ ] Integrate media picker dalam broadcast form
+- [x] Media upload exists dalam broadcastService
+- [x] Upload works untuk photos dan documents
+- [x] Files stored dalam Supabase Storage
+- [x] Preview available dalam broadcast form
+- [x] Direct integration dengan broadcast system

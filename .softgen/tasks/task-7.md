@@ -1,6 +1,6 @@
 ---
 title: Auto-Reply Rules System
-status: in_progress
+status: done
 priority: high
 type: feature
 tags: [bot, automation]
@@ -13,10 +13,10 @@ position: 7
 Build auto-reply system where bot automatically responds to user messages based on keyword triggers, regex patterns, or commands. Include priority system, multiple replies per trigger, and delay options.
 
 ## Checklist
-- [ ] Create auto_reply_rules table dengan triggers, responses, conditions
-- [ ] Build autoReplyService dengan rule matching logic
-- [ ] Create Auto-Reply management page dalam dashboard
-- [ ] Add rule builder UI dengan keyword/regex/command options
-- [ ] Implement priority system dan delay options
-- [ ] Add rule enable/disable toggle
-- [ ] Test rule matching dan response delivery
+- [x] Create auto_reply_rules table dengan triggers, responses, conditions
+- [x] Build autoReplyService dengan rule matching logic
+- [x] Create Auto-Reply management page dalam dashboard
+- [x] Add rule builder UI dengan keyword/regex/command options
+- [x] Implement priority system dan delay options
+- [x] Add rule enable/disable toggle
+- [x] Test rule matching dan response delivery
