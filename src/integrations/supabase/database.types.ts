@@ -460,6 +460,116 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_menu_items: {
+        Row: {
+          action_type: string | null
+          action_value: string | null
+          button_type: string
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          parent_id: string | null
+          position: number
+          requires_subscription: boolean | null
+          show_in_main_menu: boolean | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          action_value?: string | null
+          button_type: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          parent_id?: string | null
+          position?: number
+          requires_subscription?: boolean | null
+          show_in_main_menu?: boolean | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          action_value?: string | null
+          button_type?: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          parent_id?: string | null
+          position?: number
+          requires_subscription?: boolean | null
+          show_in_main_menu?: boolean | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_menu_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "bot_menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bot_pages: {
+        Row: {
+          buttons: Json | null
+          content: string
+          created_at: string | null
+          file_url: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          metadata: Json | null
+          page_type: string | null
+          show_back_button: boolean | null
+          title: string
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          buttons?: Json | null
+          content: string
+          created_at?: string | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          page_type?: string | null
+          show_back_button?: boolean | null
+          title: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          buttons?: Json | null
+          content?: string
+          created_at?: string | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          page_type?: string | null
+          show_back_button?: boolean | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       bot_tokens: {
         Row: {
           bot_name: string
