@@ -30,15 +30,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { broadcastService } from "@/services/broadcastService";
 import { channelService } from "@/services/channelService";
+import { templateService } from "@/services/templateService";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   Send,
@@ -52,22 +61,37 @@ import {
   Image as ImageIcon,
   Upload,
   X,
+  Calendar,
+  BookOpen,
+  Edit,
 } from "lucide-react";
 
 export default function BroadcastPage() {
   const { toast } = useToast();
   const [broadcasts, setBroadcasts] = useState<Tables<"broadcasts">[]>([]);
   const [channels, setChannels] = useState<Tables<"channels">[]>([]);
+  const [templates, setTemplates] = useState<Tables<"broadcast_templates">[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [isTemplateDeleteDialogOpen, setIsTemplateDeleteDialogOpen] = useState(false);
   const [selectedBroadcast, setSelectedBroadcast] = useState<Tables<"broadcasts"> | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Tables<"broadcast_templates"> | null>(null);
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [mediaType, setMediaType] = useState<"text" | "photo" | "document">("text");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
   const [formData, setFormData] = useState({
     title: "",
+    message: "",
+    caption: "",
+  });
+  const [templateFormData, setTemplateFormData] = useState({
+    name: "",
     message: "",
     caption: "",
   });
@@ -75,6 +99,7 @@ export default function BroadcastPage() {
   useEffect(() => {
     loadBroadcasts();
     loadChannels();
+    loadTemplates();
   }, []);
 
   const loadBroadcasts = async () => {
@@ -103,20 +128,51 @@ export default function BroadcastPage() {
     }
   };
 
+  const loadTemplates = async () => {
+    const { data, error } = await templateService.getTemplates();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else if (data) {
+      setTemplates(data);
+    }
+  };
+
   const openCreateDialog = () => {
     setFormData({ title: "", message: "", caption: "" });
     setSelectedChannels([]);
     setMediaType("text");
     setUploadedFile(null);
     setMediaPreview(null);
+    setScheduleEnabled(false);
+    setScheduledDate("");
+    setScheduledTime("");
     setIsCreateDialogOpen(true);
+  };
+
+  const openTemplateDialog = () => {
+    setTemplateFormData({ name: "", message: "", caption: "" });
+    setSelectedTemplate(null);
+    setIsTemplateDialogOpen(true);
+  };
+
+  const openEditTemplateDialog = (template: Tables<"broadcast_templates">) => {
+    setSelectedTemplate(template);
+    setTemplateFormData({
+      name: template.name,
+      message: template.message,
+      caption: template.caption || "",
+    });
+    setIsTemplateDialogOpen(true);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -126,7 +182,6 @@ export default function BroadcastPage() {
       return;
     }
 
-    // Validate file type
     if (mediaType === "photo") {
       if (!file.type.startsWith("image/")) {
         toast({
@@ -140,7 +195,6 @@ export default function BroadcastPage() {
 
     setUploadedFile(file);
 
-    // Create preview for images
     if (file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -155,6 +209,19 @@ export default function BroadcastPage() {
   const removeFile = () => {
     setUploadedFile(null);
     setMediaPreview(null);
+  };
+
+  const applyTemplate = (template: Tables<"broadcast_templates">) => {
+    setFormData({
+      ...formData,
+      message: template.message,
+      caption: template.caption || "",
+    });
+    setMediaType(template.media_type as "text" | "photo" | "document");
+    toast({
+      title: "Template Applied",
+      description: `"${template.name}" has been applied to your broadcast`,
+    });
   };
 
   const handleCreateBroadcast = async () => {
@@ -194,13 +261,23 @@ export default function BroadcastPage() {
       return;
     }
 
+    if (scheduleEnabled) {
+      if (!scheduledDate || !scheduledTime) {
+        toast({
+          title: "Error",
+          description: "Please set schedule date and time",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
       let mediaUrl = null;
       let mediaFilename = null;
 
-      // Upload media if present
       if (uploadedFile && (mediaType === "photo" || mediaType === "document")) {
         const { url, error: uploadError } = await broadcastService.uploadMedia(uploadedFile);
         if (uploadError) {
@@ -216,6 +293,11 @@ export default function BroadcastPage() {
         mediaFilename = uploadedFile.name;
       }
 
+      let scheduledAt = null;
+      if (scheduleEnabled && scheduledDate && scheduledTime) {
+        scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+      }
+
       const { error } = await broadcastService.createBroadcast({
         title: formData.title,
         message: formData.message,
@@ -225,6 +307,7 @@ export default function BroadcastPage() {
         media_url: mediaUrl || undefined,
         media_filename: mediaFilename || undefined,
         caption: formData.caption || undefined,
+        scheduled_at: scheduledAt || undefined,
       });
 
       if (error) {
@@ -236,7 +319,9 @@ export default function BroadcastPage() {
       } else {
         toast({
           title: "Success",
-          description: "Broadcast created successfully as draft",
+          description: scheduleEnabled 
+            ? `Broadcast scheduled for ${new Date(scheduledAt!).toLocaleString()}`
+            : "Broadcast created successfully as draft",
         });
         setIsCreateDialogOpen(false);
         loadBroadcasts();
@@ -247,6 +332,99 @@ export default function BroadcastPage() {
         description: error instanceof Error ? error.message : "Failed to create broadcast",
         variant: "destructive",
       });
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateFormData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter template name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!templateFormData.message.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter template message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    if (selectedTemplate) {
+      const { error } = await templateService.updateTemplate(selectedTemplate.id, {
+        name: templateFormData.name,
+        message: templateFormData.message,
+        caption: templateFormData.caption,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Template updated successfully",
+        });
+        setIsTemplateDialogOpen(false);
+        loadTemplates();
+      }
+    } else {
+      const { error } = await templateService.createTemplate({
+        name: templateFormData.name,
+        message: templateFormData.message,
+        caption: templateFormData.caption,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Template created successfully",
+        });
+        setIsTemplateDialogOpen(false);
+        loadTemplates();
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) return;
+
+    setIsLoading(true);
+
+    const { error } = await templateService.deleteTemplate(selectedTemplate.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Template deleted successfully",
+      });
+      setIsTemplateDeleteDialogOpen(false);
+      loadTemplates();
     }
 
     setIsLoading(false);
@@ -277,6 +455,11 @@ export default function BroadcastPage() {
   const openDeleteDialog = (broadcast: Tables<"broadcasts">) => {
     setSelectedBroadcast(broadcast);
     setIsDeleteDialogOpen(true);
+  };
+
+  const openTemplateDeleteDialog = (template: Tables<"broadcast_templates">) => {
+    setSelectedTemplate(template);
+    setIsTemplateDeleteDialogOpen(true);
   };
 
   const handleDeleteBroadcast = async () => {
@@ -312,7 +495,20 @@ export default function BroadcastPage() {
     );
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, scheduledAt?: string | null) => {
+    if (scheduledAt && status === "draft") {
+      const scheduledDate = new Date(scheduledAt);
+      const now = new Date();
+      if (scheduledDate > now) {
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Calendar className="h-3 w-3" />
+            Scheduled
+          </Badge>
+        );
+      }
+    }
+
     const variants: Record<string, { variant: any; icon: any }> = {
       draft: { variant: "secondary", icon: Clock },
       sending: { variant: "default", icon: Radio },
@@ -334,6 +530,9 @@ export default function BroadcastPage() {
   const totalBroadcasts = broadcasts.length;
   const sentBroadcasts = broadcasts.filter((b) => b.status === "sent").length;
   const draftBroadcasts = broadcasts.filter((b) => b.status === "draft").length;
+  const scheduledBroadcasts = broadcasts.filter(
+    (b) => b.status === "draft" && b.scheduled_at && new Date(b.scheduled_at) > new Date()
+  ).length;
 
   return (
     <ProtectedRoute>
@@ -352,13 +551,19 @@ export default function BroadcastPage() {
                 Send messages to multiple channels and groups at once
               </p>
             </div>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Broadcast
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={openTemplateDialog}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Templates
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Broadcast
+              </Button>
+            </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-4">
             <Card className="p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -406,106 +611,221 @@ export default function BroadcastPage() {
                 </div>
               </div>
             </Card>
+
+            <Card className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
+                  <h3 className="mt-2 font-heading text-3xl font-bold text-foreground">
+                    {scheduledBroadcasts}
+                  </h3>
+                  <Badge variant="outline" className="mt-2">
+                    Upcoming
+                  </Badge>
+                </div>
+                <div className="rounded-lg bg-accent/10 p-3">
+                  <Calendar className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+            </Card>
           </div>
 
-          <Card>
-            <div className="p-6">
-              <h2 className="font-heading text-xl font-semibold text-foreground">
-                Broadcast History
-              </h2>
-            </div>
+          <Tabs defaultValue="broadcasts" className="w-full">
+            <TabsList>
+              <TabsTrigger value="broadcasts">Broadcasts</TabsTrigger>
+              <TabsTrigger value="templates">Templates ({templates.length})</TabsTrigger>
+            </TabsList>
 
-            {broadcasts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="rounded-full bg-muted p-6">
-                  <Send className="h-12 w-12 text-muted-foreground" />
+            <TabsContent value="broadcasts" className="mt-6">
+              <Card>
+                <div className="p-6">
+                  <h2 className="font-heading text-xl font-semibold text-foreground">
+                    Broadcast History
+                  </h2>
                 </div>
-                <h3 className="mt-4 font-heading text-lg font-semibold text-foreground">
-                  No broadcasts yet
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Create your first broadcast to start sending messages
-                </p>
-                <Button onClick={openCreateDialog} className="mt-4">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Broadcast
-                </Button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Recipients</TableHead>
-                      <TableHead>Sent/Failed</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {broadcasts.map((broadcast) => (
-                      <TableRow key={broadcast.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{broadcast.title}</div>
-                            <div className="text-sm text-muted-foreground line-clamp-1">
-                              {broadcast.media_type === "photo" && "📷 "}
-                              {broadcast.media_type === "document" && "📄 "}
-                              {broadcast.caption || broadcast.message}
-                            </div>
+
+                {broadcasts.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="rounded-full bg-muted p-6">
+                      <Send className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-4 font-heading text-lg font-semibold text-foreground">
+                      No broadcasts yet
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Create your first broadcast to start sending messages
+                    </p>
+                    <Button onClick={openCreateDialog} className="mt-4">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Broadcast
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Recipients</TableHead>
+                          <TableHead>Sent/Failed</TableHead>
+                          <TableHead>Schedule</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {broadcasts.map((broadcast) => (
+                          <TableRow key={broadcast.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{broadcast.title}</div>
+                                <div className="text-sm text-muted-foreground line-clamp-1">
+                                  {broadcast.media_type === "photo" && "📷 "}
+                                  {broadcast.media_type === "document" && "📄 "}
+                                  {broadcast.caption || broadcast.message}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="capitalize">
+                                {broadcast.media_type || "text"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(broadcast.status, broadcast.scheduled_at)}</TableCell>
+                            <TableCell>{broadcast.target_ids.length}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <span className="text-success">{broadcast.sent_count || 0}</span>
+                                <span className="text-muted-foreground">/</span>
+                                <span className="text-destructive">{broadcast.failed_count || 0}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {broadcast.scheduled_at ? (
+                                <div className="text-sm">
+                                  {new Date(broadcast.scheduled_at).toLocaleString()}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(broadcast.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {broadcast.status === "draft" && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleSendBroadcast(broadcast)}
+                                    disabled={isLoading}
+                                    className="gap-1"
+                                  >
+                                    <Send className="h-4 w-4" />
+                                    Send
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openDeleteDialog(broadcast)}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="templates" className="mt-6">
+              <Card>
+                <div className="p-6 flex items-center justify-between">
+                  <h2 className="font-heading text-xl font-semibold text-foreground">
+                    Message Templates
+                  </h2>
+                  <Button onClick={openTemplateDialog} size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Template
+                  </Button>
+                </div>
+
+                {templates.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="rounded-full bg-muted p-6">
+                      <BookOpen className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-4 font-heading text-lg font-semibold text-foreground">
+                      No templates yet
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Create reusable templates for common messages
+                    </p>
+                    <Button onClick={openTemplateDialog} className="mt-4">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Template
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
+                    {templates.map((template) => (
+                      <Card key={template.id} className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-foreground">{template.name}</h3>
+                            <Badge variant="outline" className="mt-1 capitalize text-xs">
+                              {template.media_type}
+                            </Badge>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {broadcast.media_type || "text"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(broadcast.status)}</TableCell>
-                        <TableCell>{broadcast.target_ids.length}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <span className="text-success">{broadcast.sent_count || 0}</span>
-                            <span className="text-muted-foreground">/</span>
-                            <span className="text-destructive">{broadcast.failed_count || 0}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(broadcast.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {broadcast.status === "draft" && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleSendBroadcast(broadcast)}
-                                disabled={isLoading}
-                                className="gap-1"
-                              >
-                                <Send className="h-4 w-4" />
-                                Send
-                              </Button>
-                            )}
+                          <div className="flex gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openDeleteDialog(broadcast)}
+                              onClick={() => openEditTemplateDialog(template)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openTemplateDeleteDialog(template)}
                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                          {template.message}
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            applyTemplate(template);
+                            openCreateDialog();
+                          }}
+                          className="w-full"
+                        >
+                          Use Template
+                        </Button>
+                      </Card>
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </Card>
+                  </div>
+                )}
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -527,6 +847,27 @@ export default function BroadcastPage() {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
+
+              {templates.length > 0 && (
+                <div>
+                  <Label>Quick Apply Template</Label>
+                  <Select onValueChange={(value) => {
+                    const template = templates.find(t => t.id === value);
+                    if (template) applyTemplate(template);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label>Media Type *</Label>
@@ -652,6 +993,43 @@ export default function BroadcastPage() {
               )}
 
               <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Checkbox
+                    id="schedule"
+                    checked={scheduleEnabled}
+                    onCheckedChange={(checked) => setScheduleEnabled(!!checked)}
+                  />
+                  <Label htmlFor="schedule" className="font-normal cursor-pointer">
+                    Schedule for later
+                  </Label>
+                </div>
+
+                {scheduleEnabled && (
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <Label htmlFor="date">Date</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="time">Time</Label>
+                      <Input
+                        id="time"
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <Label>Select Channels * ({selectedChannels.length} selected)</Label>
                 <div className="mt-2 space-y-2 max-h-48 overflow-y-auto rounded-lg border p-3">
                   {channels.length === 0 ? (
@@ -691,7 +1069,67 @@ export default function BroadcastPage() {
                 Cancel
               </Button>
               <Button onClick={handleCreateBroadcast} disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create & Save as Draft"}
+                {isLoading ? "Creating..." : scheduleEnabled ? "Schedule Broadcast" : "Create & Save as Draft"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedTemplate ? "Edit Template" : "Create New Template"}
+              </DialogTitle>
+              <DialogDescription>
+                Save reusable message templates for quick broadcasting
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="template-name">Template Name *</Label>
+                <Input
+                  id="template-name"
+                  placeholder="e.g., Weekly Update"
+                  value={templateFormData.name}
+                  onChange={(e) => setTemplateFormData({ ...templateFormData, name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="template-message">Message *</Label>
+                <Textarea
+                  id="template-message"
+                  placeholder="Type your template message..."
+                  rows={6}
+                  value={templateFormData.message}
+                  onChange={(e) => setTemplateFormData({ ...templateFormData, message: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="template-caption">Caption (Optional)</Label>
+                <Textarea
+                  id="template-caption"
+                  placeholder="Add caption for media templates..."
+                  rows={3}
+                  value={templateFormData.caption}
+                  onChange={(e) => setTemplateFormData({ ...templateFormData, caption: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsTemplateDialogOpen(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveTemplate} disabled={isLoading}>
+                {isLoading ? "Saving..." : selectedTemplate ? "Update Template" : "Create Template"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -709,6 +1147,27 @@ export default function BroadcastPage() {
               <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteBroadcast}
+                disabled={isLoading}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isLoading ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={isTemplateDeleteDialogOpen} onOpenChange={setIsTemplateDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Template</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this template? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteTemplate}
                 disabled={isLoading}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >

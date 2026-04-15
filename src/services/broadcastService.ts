@@ -71,6 +71,7 @@ export const broadcastService = {
     media_url?: string;
     media_filename?: string;
     caption?: string;
+    scheduled_at?: string;
   }): Promise<{ data: Tables<"broadcasts"> | null; error: string | null }> {
     const { data: authData } = await supabase.auth.getSession();
     const userId = authData.session?.user.id;
@@ -91,6 +92,7 @@ export const broadcastService = {
         media_url: broadcastData.media_url,
         media_filename: broadcastData.media_filename,
         caption: broadcastData.caption,
+        scheduled_at: broadcastData.scheduled_at,
         status: "draft",
       })
       .select()
