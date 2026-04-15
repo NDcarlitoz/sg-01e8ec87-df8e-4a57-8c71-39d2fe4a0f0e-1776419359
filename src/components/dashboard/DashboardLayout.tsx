@@ -79,10 +79,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Build business tools nav dynamically
   const businessToolsNav = [
     { name: "Users", href: "/dashboard/users", icon: UserCog },
-    ...(affiliateEnabled ? [{ name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign }] : []),
+    ...(affiliateEnabled ? [
+      { name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign },
+      { name: "Affiliate Settings", href: "/dashboard/affiliate-settings", icon: Settings }
+    ] : []),
     { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
     { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-    { name: "Bot Menu", href: "/dashboard/bot-menu", icon: Settings },
+    { name: "Bot Menu", href: "/dashboard/bot-menu", icon: Bot },
   ];
 
   const renderMenuItem = (item: { name: string; href: string; icon: any }) => {
