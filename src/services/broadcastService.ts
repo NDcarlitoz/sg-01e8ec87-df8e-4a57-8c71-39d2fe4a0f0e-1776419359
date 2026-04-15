@@ -6,7 +6,10 @@ export const broadcastService = {
   /**
    * Get all broadcasts for current user
    */
-  async getBroadcasts(): Promise<{ data: Tables<"broadcasts">[] | null; error: string | null }> {
+  async getBroadcasts(): Promise<{
+    data: Tables<"broadcasts">[] | null;
+    error: string | null;
+  }> {
     const { data, error } = await supabase
       .from("broadcasts")
       .select("*")
@@ -16,14 +19,58 @@ export const broadcastService = {
   },
 
   /**
+   * Upload media file to Supabase Storage
+   */
+  async uploadMedia(
+    file: File
+  ): Promise<{ url: string | null; error: string | null }> {
+    try {
+      const { data: authData } = await supabase.auth.getSession();
+      const userId = authData.session?.user.id;
+
+      if (!userId) {
+        return { url: null, error: "Authentication required" };
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from("broadcast-media")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        return { url: null, error: error.message };
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("broadcast-media").getPublicUrl(data.path);
+
+      return { url: publicUrl, error: null };
+    } catch (error) {
+      return {
+        url: null,
+        error: error instanceof Error ? error.message : "Upload failed",
+      };
+    }
+  },
+
+  /**
    * Create new broadcast
    */
   async createBroadcast(broadcastData: {
     title: string;
     message: string;
     target_type: string;
-    target_ids?: string[];
-    scheduled_at?: string;
+    target_ids: string[];
+    media_type?: string;
+    media_url?: string;
+    media_filename?: string;
+    caption?: string;
   }): Promise<{ data: Tables<"broadcasts"> | null; error: string | null }> {
     const { data: authData } = await supabase.auth.getSession();
     const userId = authData.session?.user.id;
@@ -39,8 +86,11 @@ export const broadcastService = {
         title: broadcastData.title,
         message: broadcastData.message,
         target_type: broadcastData.target_type,
-        target_ids: broadcastData.target_ids || [],
-        scheduled_at: broadcastData.scheduled_at || null,
+        target_ids: broadcastData.target_ids,
+        media_type: broadcastData.media_type || "text",
+        media_url: broadcastData.media_url,
+        media_filename: broadcastData.media_filename,
+        caption: broadcastData.caption,
         status: "draft",
       })
       .select()
@@ -50,9 +100,11 @@ export const broadcastService = {
   },
 
   /**
-   * Send broadcast to targets
+   * Send broadcast to all targets
    */
-  async sendBroadcast(broadcastId: string): Promise<{ success: boolean; error: string | null }> {
+  async sendBroadcast(
+    broadcastId: string
+  ): Promise<{ success: boolean; error: string | null }> {
     try {
       // Get broadcast details
       const { data: broadcast, error: fetchError } = await supabase
@@ -66,8 +118,9 @@ export const broadcastService = {
       }
 
       // Get active bot token
-      const { token: botToken, error: tokenError } = await telegramService.getActiveBotToken();
-      if (tokenError || !botToken) {
+      const { token, error: tokenError } =
+        await telegramService.getActiveBotToken();
+      if (tokenError || !token) {
         return { success: false, error: "No active bot token found" };
       }
 
@@ -79,41 +132,55 @@ export const broadcastService = {
 
       let sentCount = 0;
       let failedCount = 0;
-      const targetIds = broadcast.target_ids || [];
 
-      // Send messages to all targets
-      for (const chatId of targetIds) {
-        try {
-          const { error: sendError } = await telegramService.sendMessage(
-            botToken,
-            chatId,
+      // Send to each target
+      for (const targetId of broadcast.target_ids) {
+        let result;
+
+        if (broadcast.media_type === "photo" && broadcast.media_url) {
+          result = await telegramService.sendPhoto(
+            token,
+            targetId,
+            broadcast.media_url,
+            broadcast.caption || broadcast.message
+          );
+        } else if (broadcast.media_type === "document" && broadcast.media_url) {
+          result = await telegramService.sendDocument(
+            token,
+            targetId,
+            broadcast.media_url,
+            broadcast.caption || broadcast.message,
+            broadcast.media_filename
+          );
+        } else {
+          result = await telegramService.sendMessage(
+            token,
+            targetId,
             broadcast.message
           );
+        }
 
-          if (sendError) {
-            failedCount++;
-          } else {
-            sentCount++;
-          }
-        } catch (err) {
+        if (result.error) {
           failedCount++;
+          console.error(`Failed to send to ${targetId}:`, result.error);
+        } else {
+          sentCount++;
         }
       }
 
-      // Update broadcast status
+      // Update broadcast with results
       await supabase
         .from("broadcasts")
         .update({
-          status: failedCount === targetIds.length ? "failed" : "sent",
+          status: failedCount === broadcast.target_ids.length ? "failed" : "sent",
           sent_count: sentCount,
           failed_count: failedCount,
-          total_recipients: targetIds.length,
-          sent_at: new Date().toISOString(),
         })
         .eq("id", broadcastId);
 
       return { success: true, error: null };
     } catch (error) {
+      console.error("Send broadcast error:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to send broadcast",

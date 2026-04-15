@@ -58,9 +58,13 @@ export type Database = {
       }
       broadcasts: {
         Row: {
+          caption: string | null
           created_at: string | null
           failed_count: number | null
           id: string
+          media_filename: string | null
+          media_type: string | null
+          media_url: string | null
           message: string
           scheduled_at: string | null
           sent_at: string | null
@@ -74,9 +78,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          caption?: string | null
           created_at?: string | null
           failed_count?: number | null
           id?: string
+          media_filename?: string | null
+          media_type?: string | null
+          media_url?: string | null
           message: string
           scheduled_at?: string | null
           sent_at?: string | null
@@ -90,9 +98,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          caption?: string | null
           created_at?: string | null
           failed_count?: number | null
           id?: string
+          media_filename?: string | null
+          media_type?: string | null
+          media_url?: string | null
           message?: string
           scheduled_at?: string | null
           sent_at?: string | null
