@@ -67,6 +67,7 @@ import {
   User,
   TrendingUp,
   AlertCircle,
+  Eye,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -130,7 +131,7 @@ export default function LeadsPage() {
   }, [leads, searchQuery, filterStatus, filterPriority, filterSource, filterStage]);
 
   const loadCurrentUser = async () => {
-    const { user } = await authService.getCurrentUser();
+    const user = await authService.getCurrentUser();
     setCurrentUser(user);
   };
 

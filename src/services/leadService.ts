@@ -507,7 +507,7 @@ export const leadService = {
 
     const bySource = Object.entries(sourceGroups).map(([source, count]) => ({
       source,
-      count,
+      count: count as number,
     }));
 
     return {
