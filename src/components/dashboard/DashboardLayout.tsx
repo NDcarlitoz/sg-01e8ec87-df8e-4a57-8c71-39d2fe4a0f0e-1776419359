@@ -27,6 +27,7 @@ import {
   Hash,
   UserCog,
   Zap,
+  Filter,
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";

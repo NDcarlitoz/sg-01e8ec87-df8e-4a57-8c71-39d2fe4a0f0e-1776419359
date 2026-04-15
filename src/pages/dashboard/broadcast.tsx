@@ -51,6 +51,7 @@ import { templateService } from "@/services/templateService";
 import { userService } from "@/services/userService";
 import { groupService } from "@/services/groupService";
 import { forwardService } from "@/services/forwardService";
+import { segmentService } from "@/services/segmentService";
 import type { Tables } from "@/integrations/supabase/types";
 import type { TelegramButton } from "@/services/telegramService";
 import {
@@ -88,6 +89,7 @@ export default function BroadcastPage() {
   const [users, setUsers] = useState<Tables<"bot_users">[]>([]);
   const [groups, setGroups] = useState<Tables<"bot_groups">[]>([]);
   const [templates, setTemplates] = useState<Tables<"broadcast_templates">[]>([]);
+  const [segments, setSegments] = useState<Tables<"user_segments">[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isForwardDialogOpen, setIsForwardDialogOpen] = useState(false);
@@ -98,7 +100,7 @@ export default function BroadcastPage() {
   const [selectedBroadcast, setSelectedBroadcast] = useState<Tables<"broadcasts"> | null>(null);
   const [selectedForward, setSelectedForward] = useState<Tables<"message_forwards"> | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Tables<"broadcast_templates"> | null>(null);
-  const [targetType, setTargetType] = useState<"channels" | "users" | "groups">("channels");
+  const [targetType, setTargetType] = useState<"channels" | "users" | "groups" | "segments">("channels");
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [mediaType, setMediaType] = useState<"text" | "photo" | "document">("text");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -131,6 +133,7 @@ export default function BroadcastPage() {
     loadUsers();
     loadGroups();
     loadTemplates();
+    loadSegments();
   }, []);
 
   const loadBroadcasts = async () => {
@@ -208,6 +211,13 @@ export default function BroadcastPage() {
       });
     } else if (data) {
       setTemplates(data);
+    }
+  };
+
+  const loadSegments = async () => {
+    const { data, error } = await segmentService.getSegments();
+    if (!error) {
+      setSegments(data);
     }
   };
 
@@ -1624,34 +1634,81 @@ export default function BroadcastPage() {
                   setSelectedTargets([]);
                 }}>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="channels" id="target-channels" />
-                    <Label htmlFor="target-channels" className="font-normal cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Tv className="h-4 w-4" />
-                        Channels
-                      </div>
+                    <RadioGroupItem value="channels" id="channels" />
+                    <Label htmlFor="channels" className="cursor-pointer">
+                      Channels
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="users" id="target-users" />
-                    <Label htmlFor="target-users" className="font-normal cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Users (Private Chats)
-                      </div>
+                    <RadioGroupItem value="users" id="users" />
+                    <Label htmlFor="users" className="cursor-pointer">
+                      Users (Private Chats)
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="groups" id="target-groups" />
-                    <Label htmlFor="target-groups" className="font-normal cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        Groups
-                      </div>
+                    <RadioGroupItem value="groups" id="groups" />
+                    <Label htmlFor="groups" className="cursor-pointer">
+                      Groups
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="segments" id="segments" />
+                    <Label htmlFor="segments" className="cursor-pointer">
+                      Segments (Auto-targeted)
                     </Label>
                   </div>
                 </RadioGroup>
               </div>
+
+              {targetType === "segments" && (
+                <div>
+                  <Label>Select Segments *</Label>
+                  <div className="border rounded-md p-4 space-y-2 max-h-60 overflow-y-auto">
+                    {segments.filter(s => s.is_active).length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No active segments available. Create segments in the Segments page.
+                      </p>
+                    ) : (
+                      segments.filter(s => s.is_active).map((segment) => (
+                        <div key={segment.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`segment-${segment.id}`}
+                            checked={selectedTargets.includes(segment.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedTargets([...selectedTargets, segment.id]);
+                              } else {
+                                setSelectedTargets(
+                                  selectedTargets.filter((id) => id !== segment.id)
+                                );
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`segment-${segment.id}`}
+                            className="flex-1 cursor-pointer flex items-center justify-between"
+                          >
+                            <span>
+                              {segment.name}
+                              {segment.description && (
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  ({segment.description})
+                                </span>
+                              )}
+                            </span>
+                            <Badge variant="secondary" className="ml-2">
+                              {segment.member_count || 0} members
+                            </Badge>
+                          </Label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Note: Broadcast will be sent to all users matching segment criteria
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label>Select Targets * ({selectedTargets.length} selected)</Label>
