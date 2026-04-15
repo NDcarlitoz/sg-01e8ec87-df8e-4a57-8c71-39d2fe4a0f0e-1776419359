@@ -127,19 +127,18 @@ export default function GroupsPage() {
       }
 
       // Get member count
-      const { count: memberCount } = await telegramService.getChatMembersCount(
+      const { data: memberCount } = await telegramService.getChatMembersCount(
         token,
         formData.chatId
       );
 
       // Create group with verified data
-      const { error } = await groupService.createGroup({
-        chat_id: formData.chatId,
+      const { error } = await groupService.upsertGroup({
+        chat_id: Number(formData.chatId),
         title: chatInfo?.title || formData.title,
         username: chatInfo?.username || formData.username || undefined,
         type: (chatInfo?.type as "group" | "supergroup") || formData.type,
         description: formData.description || undefined,
-        invite_link: formData.inviteLink || undefined,
         member_count: memberCount || 0,
       });
 
@@ -176,7 +175,7 @@ export default function GroupsPage() {
       return;
     }
 
-    const { count, error } = await telegramService.getChatMembersCount(
+    const { data: count, error } = await telegramService.getChatMembersCount(
       token,
       group.chat_id
     );
@@ -188,7 +187,12 @@ export default function GroupsPage() {
         variant: "destructive",
       });
     } else {
-      await groupService.updateGroup(group.id, {
+      await groupService.upsertGroup({
+        chat_id: group.chat_id,
+        title: group.title,
+        type: group.type,
+        username: group.username || undefined,
+        description: group.description || undefined,
         member_count: count || 0,
       });
       
