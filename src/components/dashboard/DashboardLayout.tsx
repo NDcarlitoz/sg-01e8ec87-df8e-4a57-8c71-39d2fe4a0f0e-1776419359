@@ -80,9 +80,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const businessToolsNav = [
     { name: "Users", href: "/dashboard/users", icon: UserCog },
     ...(affiliateEnabled ? [
-      { name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign },
-      { name: "Affiliate Settings", href: "/dashboard/affiliate-settings", icon: Settings }
+      { name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign }
     ] : []),
+    { name: "Affiliate Settings", href: "/dashboard/affiliate-settings", icon: Settings },
     { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
     { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
     { name: "Bot Menu", href: "/dashboard/bot-menu", icon: Bot },
