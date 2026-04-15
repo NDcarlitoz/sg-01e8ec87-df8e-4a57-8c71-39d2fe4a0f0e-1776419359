@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { leadService } from "@/services/leadService";
 import type { Tables } from "@/integrations/supabase/types";
-import { MessageSquare, UserPlus, Phone, Mail, Building, Search, Briefcase } from "lucide-react";
+import { MessageSquare, UserPlus, Phone, Mail, Building, Search, Briefcase, Users, DollarSign } from "lucide-react";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -168,6 +168,3 @@ export default function LeadsPage() {
     </ProtectedRoute>
   );
 }
-
-// Needed imports workaround for Users missing from previous lucide import
-import { Users } from "lucide-react";
