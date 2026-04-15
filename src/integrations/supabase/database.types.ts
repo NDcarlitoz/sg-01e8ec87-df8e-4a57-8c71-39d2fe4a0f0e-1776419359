@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -55,6 +55,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      broadcast_templates: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          id: string
+          media_filename: string | null
+          media_type: string
+          media_url: string | null
+          message: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          media_filename?: string | null
+          media_type?: string
+          media_url?: string | null
+          message: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          media_filename?: string | null
+          media_type?: string
+          media_url?: string | null
+          message?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       broadcasts: {
         Row: {
