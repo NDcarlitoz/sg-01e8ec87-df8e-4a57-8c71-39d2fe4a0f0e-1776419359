@@ -1,6 +1,6 @@
 ---
 title: Broadcast System
-status: todo
+status: done
 priority: high
 type: feature
 tags: [frontend, broadcast]
@@ -13,10 +13,10 @@ position: 3
 Sistem untuk broadcast messages ke private chats, groups, dan channels. Support scheduling, targeting, dan message templates.
 
 ## Checklist
-- [ ] Create Broadcast composer dengan rich text editor
-- [ ] Add targeting options (all users, specific groups, channels)
-- [ ] Create scheduling system untuk delayed broadcasts
-- [ ] Add message templates library
-- [ ] Create broadcast history dengan stats (delivered, read, clicked)
-- [ ] Create Supabase schema untuk broadcasts table
-- [ ] Add progress tracking untuk ongoing broadcasts
+- [x] Create Broadcast composer dengan rich text editor
+- [x] Add targeting options (all users, specific groups, channels)
+- [x] Create scheduling system untuk delayed broadcasts
+- [x] Add message templates library
+- [x] Create broadcast history dengan stats (delivered, read, clicked)
+- [x] Create Supabase schema untuk broadcasts table
+- [x] Add progress tracking untuk ongoing broadcasts
