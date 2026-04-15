@@ -81,7 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(affiliateEnabled ? [{ name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign }] : []),
     { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
     { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-    { name: "Affiliate Settings", href: "/dashboard/affiliate-settings", icon: Settings },
+    { name: "Bot Menu", href: "/dashboard/bot-menu", icon: Settings },
   ];
 
   const renderMenuItem = (item: { name: string; href: string; icon: any }) => {
@@ -91,13 +91,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <SidebarMenuButton
           onClick={() => router.push(item.href)}
           isActive={isActive}
-          className={`w-full text-[15px] ${
+          className={`w-full text-sm ${
             isActive
               ? "bg-accent text-accent-foreground font-semibold hover:bg-accent/90"
-              : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+              : "text-foreground/70 hover:bg-accent/10 hover:text-foreground"
           }`}
         >
-          <item.icon className="h-5 w-5" />
+          <item.icon className="h-4 w-4" />
           <span>{item.name}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -107,70 +107,71 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <Sidebar>
-          <div className="border-b bg-background px-4 py-4">
+        <Sidebar className="border-r bg-card">
+          <div className="border-b bg-card px-4 py-3.5">
             <div className="flex items-center gap-2">
-              <Bot className="h-6 w-6 text-accent" />
-              <span className="font-heading text-lg font-bold">Telegram Bot Admin</span>
+              <Bot className="h-5 w-5 text-accent" />
+              <span className="font-heading text-base font-bold">Telegram Bot Admin</span>
             </div>
           </div>
 
-          <SidebarContent className="bg-muted/30">
+          <SidebarContent className="bg-muted/50">
             <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Bot Management
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-1 px-2">
+                <SidebarMenu className="space-y-0.5 px-2">
                   {botManagementNav.map(renderMenuItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
 
             <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Automation
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-1 px-2">
+                <SidebarMenu className="space-y-0.5 px-2">
                   {automationNav.map(renderMenuItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
 
             <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Business Tools
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-1 px-2">
+                <SidebarMenu className="space-y-0.5 px-2">
                   {businessToolsNav.map(renderMenuItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
 
             <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Account
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-1 px-2">
+                <SidebarMenu className="space-y-0.5 px-2">
                   {accountNav.map(renderMenuItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
           
-          <SidebarFooter className="border-t bg-background p-4">
-            <div className="mb-3 rounded-lg bg-success/10 px-3 py-2">
+          <SidebarFooter className="border-t bg-card p-3">
+            <div className="mb-2 rounded-lg bg-success/10 px-3 py-2">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
-                <span className="text-sm font-medium text-success">Bot Active</span>
+                <span className="text-xs font-medium text-success">Bot Active</span>
               </div>
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
+              size="sm"
+              className="w-full justify-start text-sm text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -180,7 +181,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Sidebar>
 
         <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
