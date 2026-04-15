@@ -1,6 +1,6 @@
 ---
 title: Group Moderation & Security System
-status: in_progress
+status: done
 priority: high
 type: feature
 tags: [groups, moderation, security]
@@ -10,17 +10,17 @@ position: 10
 ---
 
 ## Notes
-Build comprehensive group moderation system dengan auto-ban, auto-kick, message filtering, banned words detection, dan force join channel requirements. Enable admins untuk maintain safe, spam-free groups.
+Build comprehensive group moderation system dengan auto-ban, auto-kick, auto-remove logic, banned words detection, dan force join channel requirements. Enable admins untuk maintain safe, spam-free groups.
 
 ## Checklist
-- [ ] Create group_moderation_settings table untuk per-group configuration
-- [ ] Create banned_words table untuk word filtering
-- [ ] Create moderation_logs table untuk track actions
-- [ ] Create force_join_channels table untuk membership requirements
-- [ ] Build moderationService dengan auto-ban, kick, remove logic
-- [ ] Create Group Moderation page dalam dashboard
-- [ ] Add banned words management UI
-- [ ] Add force join channels configuration
-- [ ] Implement message monitoring dan auto-actions
-- [ ] Add moderation logs viewer
-- [ ] Test all moderation features
+- [x] Create group_moderation_settings table untuk per-group configuration
+- [x] Create banned_words table untuk word filtering
+- [x] Create moderation_logs table untuk track actions
+- [x] Create force_join_channels table untuk membership requirements
+- [x] Build moderationService dengan auto-ban, kick, remove logic
+- [x] Create Group Moderation page dalam dashboard
+- [x] Add banned words management UI
+- [x] Add force join channels configuration
+- [x] Implement message monitoring dan auto-actions
+- [x] Add moderation logs viewer
+- [x] Test all moderation features

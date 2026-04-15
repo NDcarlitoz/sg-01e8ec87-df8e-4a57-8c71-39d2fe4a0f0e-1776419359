@@ -28,6 +28,7 @@ import {
   UserCog,
   Zap,
   Filter,
+  Shield,
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const businessToolsNav = [
 const automationNav = [
   { name: "Auto-Reply", href: "/dashboard/auto-reply", icon: Zap },
   { name: "Segments", href: "/dashboard/segments", icon: Filter },
+  { name: "Moderation", href: "/dashboard/moderation", icon: Shield },
 ];
 
 const accountNav = [
