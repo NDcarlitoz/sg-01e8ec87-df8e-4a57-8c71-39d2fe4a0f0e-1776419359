@@ -23,9 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       token = activeToken;
     }
 
-    const { data, error } = await telegramService.sendMessage(token, chatId, text, {
-      parse_mode: parseMode,
-    });
+    const { data, error } = await telegramService.sendMessage(token, chatId, text);
 
     if (error) {
       return res.status(400).json({ error });

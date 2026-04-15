@@ -137,7 +137,7 @@ export const broadcastService = {
       let sentCount = 0;
       let failedCount = 0;
 
-      const buttons = broadcast.buttons as TelegramButton[][] | null;
+      const buttons = (broadcast.buttons as unknown) as TelegramButton[][] | null;
 
       // Send to each target
       for (const targetId of broadcast.target_ids) {
