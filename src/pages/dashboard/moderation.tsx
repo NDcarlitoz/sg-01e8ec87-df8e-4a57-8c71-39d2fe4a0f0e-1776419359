@@ -76,8 +76,8 @@ export default function ModerationPage() {
     auto_delete_enabled: true,
     auto_kick_enabled: false,
     auto_ban_enabled: false,
-    kick_threshold: 3,
-    ban_threshold: 5,
+    kick_after_violations: 3,
+    ban_after_violations: 5,
     violation_reset_hours: 24,
   });
 
@@ -144,8 +144,8 @@ export default function ModerationPage() {
         auto_delete_enabled: data.auto_delete_enabled,
         auto_kick_enabled: data.auto_kick_enabled,
         auto_ban_enabled: data.auto_ban_enabled,
-        kick_threshold: data.kick_threshold,
-        ban_threshold: data.ban_threshold,
+        kick_after_violations: data.kick_after_violations,
+        ban_after_violations: data.ban_after_violations,
         violation_reset_hours: data.violation_reset_hours,
       });
     }
@@ -477,11 +477,11 @@ export default function ModerationPage() {
                                   type="number"
                                   min="1"
                                   max="10"
-                                  value={settingsForm.kick_threshold}
+                                  value={settingsForm.kick_after_violations}
                                   onChange={(e) =>
                                     setSettingsForm({
                                       ...settingsForm,
-                                      kick_threshold: parseInt(e.target.value) || 3,
+                                      kick_after_violations: parseInt(e.target.value) || 3,
                                     })
                                   }
                                   className="mt-1 w-32"
@@ -514,11 +514,11 @@ export default function ModerationPage() {
                                   type="number"
                                   min="1"
                                   max="20"
-                                  value={settingsForm.ban_threshold}
+                                  value={settingsForm.ban_after_violations}
                                   onChange={(e) =>
                                     setSettingsForm({
                                       ...settingsForm,
-                                      ban_threshold: parseInt(e.target.value) || 5,
+                                      ban_after_violations: parseInt(e.target.value) || 5,
                                     })
                                   }
                                   className="mt-1 w-32"
@@ -688,15 +688,15 @@ export default function ModerationPage() {
                               <div className="flex items-center gap-3">
                                 <Hash className="h-5 w-5 text-primary" />
                                 <div>
-                                  <h3 className="font-semibold">{item.channel.title}</h3>
-                                  {item.channel.username && (
+                                  <h3 className="font-semibold">{item.channel.channel_name}</h3>
+                                  {item.channel.channel_username && (
                                     <a
-                                      href={`https://t.me/${item.channel.username}`}
+                                      href={`https://t.me/${item.channel.channel_username}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-sm text-accent hover:underline"
                                     >
-                                      @{item.channel.username}
+                                      @{item.channel.channel_username}
                                     </a>
                                   )}
                                   <p className="text-xs text-muted-foreground mt-1">
@@ -907,8 +907,8 @@ export default function ModerationPage() {
                       )
                       .map((channel) => (
                         <SelectItem key={channel.id} value={channel.id}>
-                          {channel.title}
-                          {channel.username && ` (@${channel.username})`}
+                          {channel.channel_name}
+                          {channel.channel_username && ` (@${channel.channel_username})`}
                         </SelectItem>
                       ))}
                   </SelectContent>
