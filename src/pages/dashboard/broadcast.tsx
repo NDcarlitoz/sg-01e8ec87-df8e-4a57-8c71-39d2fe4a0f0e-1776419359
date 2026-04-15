@@ -48,6 +48,8 @@ import { useToast } from "@/hooks/use-toast";
 import { broadcastService } from "@/services/broadcastService";
 import { channelService } from "@/services/channelService";
 import { templateService } from "@/services/templateService";
+import { userService } from "@/services/userService";
+import { groupService } from "@/services/groupService";
 import type { Tables } from "@/integrations/supabase/types";
 import type { TelegramButton } from "@/services/telegramService";
 import {
@@ -66,6 +68,9 @@ import {
   BookOpen,
   Edit,
   Link as LinkIcon,
+  Users,
+  MessageSquare,
+  Tv,
 } from "lucide-react";
 
 interface ButtonRow {
@@ -77,6 +82,8 @@ export default function BroadcastPage() {
   const { toast } = useToast();
   const [broadcasts, setBroadcasts] = useState<Tables<"broadcasts">[]>([]);
   const [channels, setChannels] = useState<Tables<"channels">[]>([]);
+  const [users, setUsers] = useState<Tables<"bot_users">[]>([]);
+  const [groups, setGroups] = useState<Tables<"bot_groups">[]>([]);
   const [templates, setTemplates] = useState<Tables<"broadcast_templates">[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -85,7 +92,8 @@ export default function BroadcastPage() {
   const [isTemplateDeleteDialogOpen, setIsTemplateDeleteDialogOpen] = useState(false);
   const [selectedBroadcast, setSelectedBroadcast] = useState<Tables<"broadcasts"> | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Tables<"broadcast_templates"> | null>(null);
-  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  const [targetType, setTargetType] = useState<"channels" | "users" | "groups">("channels");
+  const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [mediaType, setMediaType] = useState<"text" | "photo" | "document">("text");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -107,6 +115,8 @@ export default function BroadcastPage() {
   useEffect(() => {
     loadBroadcasts();
     loadChannels();
+    loadUsers();
+    loadGroups();
     loadTemplates();
   }, []);
 
@@ -136,6 +146,32 @@ export default function BroadcastPage() {
     }
   };
 
+  const loadUsers = async () => {
+    const { data, error } = await userService.getUsers();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else if (data) {
+      setUsers(data.filter((u) => u.is_active));
+    }
+  };
+
+  const loadGroups = async () => {
+    const { data, error } = await groupService.getGroups();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else if (data) {
+      setGroups(data.filter((g) => g.is_active));
+    }
+  };
+
   const loadTemplates = async () => {
     const { data, error } = await templateService.getTemplates();
     if (error) {
@@ -151,7 +187,8 @@ export default function BroadcastPage() {
 
   const openCreateDialog = () => {
     setFormData({ title: "", message: "", caption: "" });
-    setSelectedChannels([]);
+    setTargetType("channels");
+    setSelectedTargets([]);
     setMediaType("text");
     setUploadedFile(null);
     setMediaPreview(null);
@@ -177,7 +214,6 @@ export default function BroadcastPage() {
       caption: template.caption || "",
     });
     
-    // Load buttons from template
     if (template.buttons) {
       const loadedButtons = (template.buttons as any).map((row: TelegramButton[], index: number) => ({
         id: `row-${Date.now()}-${index}`,
@@ -303,7 +339,6 @@ export default function BroadcastPage() {
     });
     setMediaType(template.media_type as "text" | "photo" | "document");
     
-    // Apply buttons from template
     if (template.buttons) {
       const loadedButtons = (template.buttons as any).map((row: TelegramButton[], index: number) => ({
         id: `row-${Date.now()}-${index}`,
@@ -346,10 +381,10 @@ export default function BroadcastPage() {
       return;
     }
 
-    if (selectedChannels.length === 0) {
+    if (selectedTargets.length === 0) {
       toast({
         title: "Error",
-        description: "Please select at least one channel",
+        description: "Please select at least one target",
         variant: "destructive",
       });
       return;
@@ -397,8 +432,8 @@ export default function BroadcastPage() {
       const { error } = await broadcastService.createBroadcast({
         title: formData.title,
         message: formData.message,
-        target_type: "channels",
-        target_ids: selectedChannels,
+        target_type: targetType,
+        target_ids: selectedTargets,
         media_type: mediaType,
         media_url: mediaUrl || undefined,
         media_filename: mediaFilename || undefined,
@@ -588,11 +623,11 @@ export default function BroadcastPage() {
     setIsLoading(false);
   };
 
-  const toggleChannelSelection = (channelId: string) => {
-    setSelectedChannels((prev) =>
-      prev.includes(channelId)
-        ? prev.filter((id) => id !== channelId)
-        : [...prev, channelId]
+  const toggleTargetSelection = (targetId: string) => {
+    setSelectedTargets((prev) =>
+      prev.includes(targetId)
+        ? prev.filter((id) => id !== targetId)
+        : [...prev, targetId]
     );
   };
 
@@ -628,6 +663,61 @@ export default function BroadcastPage() {
     );
   };
 
+  const getTargetTypeBadge = (type: string) => {
+    const config: Record<string, { icon: any; label: string; variant: any }> = {
+      channels: { icon: Tv, label: "Channels", variant: "default" },
+      users: { icon: Users, label: "Users", variant: "secondary" },
+      groups: { icon: MessageSquare, label: "Groups", variant: "outline" },
+    };
+
+    const { icon: Icon, label, variant } = config[type] || config.channels;
+
+    return (
+      <Badge variant={variant} className="gap-1">
+        <Icon className="h-3 w-3" />
+        {label}
+      </Badge>
+    );
+  };
+
+  const getCurrentTargets = () => {
+    switch (targetType) {
+      case "users":
+        return users;
+      case "groups":
+        return groups;
+      default:
+        return channels;
+    }
+  };
+
+  const getTargetId = (target: any) => {
+    if (targetType === "users") {
+      return target.user_id.toString();
+    } else if (targetType === "groups") {
+      return target.chat_id.toString();
+    }
+    return target.channel_id;
+  };
+
+  const getTargetName = (target: any) => {
+    if (targetType === "users") {
+      return target.first_name + (target.last_name ? ` ${target.last_name}` : "");
+    } else if (targetType === "groups") {
+      return target.title;
+    }
+    return target.channel_name;
+  };
+
+  const getTargetSecondary = (target: any) => {
+    if (targetType === "users") {
+      return target.username ? `@${target.username}` : null;
+    } else if (targetType === "groups") {
+      return target.username ? `@${target.username}` : `${target.member_count || 0} members`;
+    }
+    return target.channel_username ? `@${target.channel_username}` : null;
+  };
+
   const totalBroadcasts = broadcasts.length;
   const sentBroadcasts = broadcasts.filter((b) => b.status === "sent").length;
   const draftBroadcasts = broadcasts.filter((b) => b.status === "draft").length;
@@ -649,7 +739,7 @@ export default function BroadcastPage() {
                 Broadcast Messages
               </h1>
               <p className="mt-2 text-muted-foreground">
-                Send messages to multiple channels and groups at once
+                Send messages to channels, groups, and users
               </p>
             </div>
             <div className="flex gap-2">
@@ -767,6 +857,7 @@ export default function BroadcastPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Title</TableHead>
+                          <TableHead>Target Type</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Recipients</TableHead>
@@ -795,6 +886,7 @@ export default function BroadcastPage() {
                                 )}
                               </div>
                             </TableCell>
+                            <TableCell>{getTargetTypeBadge(broadcast.target_type)}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className="capitalize">
                                 {broadcast.media_type || "text"}
@@ -948,7 +1040,7 @@ export default function BroadcastPage() {
             <DialogHeader>
               <DialogTitle>Create New Broadcast</DialogTitle>
               <DialogDescription>
-                Create a broadcast message to send to multiple channels
+                Create a broadcast message to send to channels, groups, or users
               </DialogDescription>
             </DialogHeader>
 
@@ -1229,26 +1321,64 @@ export default function BroadcastPage() {
               </div>
 
               <div>
-                <Label>Select Channels * ({selectedChannels.length} selected)</Label>
+                <Label>Target Type *</Label>
+                <RadioGroup value={targetType} onValueChange={(value: any) => {
+                  setTargetType(value);
+                  setSelectedTargets([]);
+                }}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="channels" id="target-channels" />
+                    <Label htmlFor="target-channels" className="font-normal cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Tv className="h-4 w-4" />
+                        Channels
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="users" id="target-users" />
+                    <Label htmlFor="target-users" className="font-normal cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Users (Private Chats)
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="groups" id="target-groups" />
+                    <Label htmlFor="target-groups" className="font-normal cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Groups
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div>
+                <Label>Select Targets * ({selectedTargets.length} selected)</Label>
                 <div className="mt-2 space-y-2 max-h-48 overflow-y-auto rounded-lg border p-3">
-                  {channels.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No active channels available</p>
+                  {getCurrentTargets().length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No active {targetType} available
+                    </p>
                   ) : (
-                    channels.map((channel) => (
-                      <div key={channel.id} className="flex items-center space-x-2">
+                    getCurrentTargets().map((target) => (
+                      <div key={target.id} className="flex items-center space-x-2">
                         <Checkbox
-                          id={channel.id}
-                          checked={selectedChannels.includes(channel.channel_id)}
-                          onCheckedChange={() => toggleChannelSelection(channel.channel_id)}
+                          id={target.id}
+                          checked={selectedTargets.includes(getTargetId(target))}
+                          onCheckedChange={() => toggleTargetSelection(getTargetId(target))}
                         />
                         <Label
-                          htmlFor={channel.id}
+                          htmlFor={target.id}
                           className="text-sm font-normal cursor-pointer flex-1"
                         >
-                          {channel.channel_name}
-                          {channel.channel_username && (
+                          {getTargetName(target)}
+                          {getTargetSecondary(target) && (
                             <span className="ml-2 text-muted-foreground">
-                              @{channel.channel_username}
+                              {getTargetSecondary(target)}
                             </span>
                           )}
                         </Label>
