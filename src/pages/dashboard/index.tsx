@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Bot, Activity, Zap } from "lucide-react";
+import { Plus, Pencil, Trash2, Bot, Activity, Zap, Edit } from "lucide-react";
 import { botTokenService } from "@/services/botTokenService";
 import { profileService } from "@/services/profileService";
 import type { Tables } from "@/integrations/supabase/types";
@@ -190,17 +190,22 @@ export default function BotSettings() {
     loadBotStats();
   };
 
-  const handleDeleteToken = async () => {
-    if (!selectedToken) return;
-
+  const handleSetupWebhook = async (botId: string) => {
     setIsLoading(true);
-    const { error } = await botTokenService.deleteBotToken(selectedToken.id);
+    
+    const response = await fetch("/api/telegram/set-webhook", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ botId }),
+    });
+
+    const data = await response.json();
     setIsLoading(false);
 
-    if (error) {
+    if (!response.ok) {
       toast({
         title: "Error",
-        description: "Failed to delete bot token",
+        description: data.error || "Failed to setup webhook",
         variant: "destructive",
       });
       return;
@@ -208,13 +213,34 @@ export default function BotSettings() {
 
     toast({
       title: "Success",
-      description: "Bot token deleted successfully",
+      description: "Bot webhook configured successfully! Your bot is now live.",
     });
 
-    setIsDeleteDialogOpen(false);
-    setSelectedToken(null);
     loadBotTokens();
-    loadBotStats();
+  };
+
+  const handleDeleteToken = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this bot token?")) return;
+
+    setIsLoading(true);
+    const { error } = await botTokenService.deleteBotToken(id);
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Bot token deleted",
+    });
+
+    loadBotTokens();
   };
 
   const handleToggleStatus = async (token: BotToken) => {
@@ -396,20 +422,37 @@ export default function BotSettings() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex justify-end gap-2">
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditDialog(token)}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSetupWebhook(token.id)}
+                                disabled={isLoading}
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Zap className="h-4 w-4 mr-1" />
+                                Setup Webhook
                               </Button>
                               <Button
                                 variant="ghost"
-                                size="icon"
-                                onClick={() => openDeleteDialog(token)}
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedToken(token);
+                                  setFormData({
+                                    bot_name: token.bot_name,
+                                    bot_token: token.bot_token,
+                                    bot_username: token.bot_username || "",
+                                  });
+                                  setIsEditDialogOpen(true);
+                                }}
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteToken(token.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -540,7 +583,7 @@ export default function BotSettings() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDeleteToken}
+                onClick={() => handleDeleteToken(selectedToken?.id || "")}
                 className="bg-destructive hover:bg-destructive/90"
               >
                 {isLoading ? "Deleting..." : "Delete"}
