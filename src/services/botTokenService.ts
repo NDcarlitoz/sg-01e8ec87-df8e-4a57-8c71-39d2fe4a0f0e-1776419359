@@ -29,33 +29,52 @@ export const botTokenService = {
       return { data: null, error: "Authentication required" };
     }
 
-    // Verify token with Telegram API first
-    const verifyResponse = await fetch("/api/telegram/get-bot-info", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ botToken: tokenData.bot_token }),
-    });
+    console.log("Verifying bot token with Telegram API...");
 
-    if (!verifyResponse.ok) {
-      const errorData = await verifyResponse.json();
-      return { data: null, error: errorData.error || "Invalid bot token" };
+    try {
+      // Verify token with Telegram API first
+      const verifyResponse = await fetch("/api/telegram/get-bot-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botToken: tokenData.bot_token }),
+      });
+
+      console.log("Telegram API response status:", verifyResponse.status);
+
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json();
+        console.error("Telegram API error:", errorData);
+        return { data: null, error: errorData.error || "Invalid bot token - verification failed" };
+      }
+
+      const { data: botInfo } = await verifyResponse.json();
+      console.log("Bot verified successfully:", botInfo);
+
+      // Insert to database with verified bot info
+      const { data, error } = await supabase
+        .from("bot_tokens")
+        .insert({
+          bot_name: tokenData.bot_name,
+          bot_token: tokenData.bot_token,
+          bot_username: tokenData.bot_username || botInfo?.username || null,
+          user_id: userId,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Database insert error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Bot token creation error:", error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error.message : "Failed to verify bot token"
+      };
     }
-
-    const { data: botInfo } = await verifyResponse.json();
-
-    // Insert to database with verified bot info
-    const { data, error } = await supabase
-      .from("bot_tokens")
-      .insert({
-        bot_name: tokenData.bot_name,
-        bot_token: tokenData.bot_token,
-        bot_username: tokenData.bot_username || botInfo.username || null,
-        user_id: userId,
-      })
-      .select()
-      .single();
-
-    return { data, error: error?.message || null };
   },
 
   /**
@@ -69,30 +88,46 @@ export const botTokenService = {
       bot_username?: string;
     }
   ): Promise<{ data: Tables<"bot_tokens"> | null; error: string | null }> {
-    // Verify token with Telegram API first
-    const verifyResponse = await fetch("/api/telegram/get-bot-info", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ botToken: tokenData.bot_token }),
-    });
+    console.log("Verifying updated bot token...");
 
-    if (!verifyResponse.ok) {
-      const errorData = await verifyResponse.json();
-      return { data: null, error: errorData.error || "Invalid bot token" };
+    try {
+      // Verify token with Telegram API first
+      const verifyResponse = await fetch("/api/telegram/get-bot-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botToken: tokenData.bot_token }),
+      });
+
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json();
+        console.error("Telegram API error:", errorData);
+        return { data: null, error: errorData.error || "Invalid bot token" };
+      }
+
+      const { data, error } = await supabase
+        .from("bot_tokens")
+        .update({
+          bot_name: tokenData.bot_name,
+          bot_token: tokenData.bot_token,
+          bot_username: tokenData.bot_username,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Database update error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Bot token update error:", error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error.message : "Failed to update bot token"
+      };
     }
-
-    const { data, error } = await supabase
-      .from("bot_tokens")
-      .update({
-        bot_name: tokenData.bot_name,
-        bot_token: tokenData.bot_token,
-        bot_username: tokenData.bot_username,
-      })
-      .eq("id", id)
-      .select()
-      .single();
-
-    return { data, error: error?.message || null };
   },
 
   /**

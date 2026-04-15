@@ -102,9 +102,10 @@ export default function BotSettings() {
     setIsLoading(false);
 
     if (error) {
+      console.error("Bot token creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to add bot token",
+        description: error || "Failed to add bot token",
         variant: "destructive",
       });
       return;
@@ -148,9 +149,10 @@ export default function BotSettings() {
     setIsLoading(false);
 
     if (error) {
+      console.error("Bot token update error:", error);
       toast({
         title: "Error",
-        description: "Failed to update bot token",
+        description: error || "Failed to update bot token",
         variant: "destructive",
       });
       return;
