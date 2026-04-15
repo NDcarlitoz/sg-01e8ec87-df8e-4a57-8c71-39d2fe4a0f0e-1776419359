@@ -81,6 +81,54 @@ export type Database = {
         }
         Relationships: []
       }
+      banned_words: {
+        Row: {
+          action: string
+          case_sensitive: boolean | null
+          created_at: string | null
+          group_id: string
+          id: string
+          is_regex: boolean | null
+          owner_id: string
+          word: string
+        }
+        Insert: {
+          action?: string
+          case_sensitive?: boolean | null
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_regex?: boolean | null
+          owner_id: string
+          word: string
+        }
+        Update: {
+          action?: string
+          case_sensitive?: boolean | null
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_regex?: boolean | null
+          owner_id?: string
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banned_words_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banned_words_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bot_groups: {
         Row: {
           chat_id: number
@@ -367,6 +415,148 @@ export type Database = {
           },
         ]
       }
+      force_join_channels: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          group_id: string
+          id: string
+          is_required: boolean | null
+          owner_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_required?: boolean | null
+          owner_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_required?: boolean | null
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "force_join_channels_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "force_join_channels_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "force_join_channels_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_moderation_settings: {
+        Row: {
+          auto_ban_enabled: boolean | null
+          auto_delete_enabled: boolean | null
+          auto_kick_enabled: boolean | null
+          ban_after_violations: number | null
+          created_at: string | null
+          delete_join_messages: boolean | null
+          delete_spam_messages: boolean | null
+          filter_forwards: boolean | null
+          filter_links: boolean | null
+          filter_media: boolean | null
+          filter_mentions: boolean | null
+          force_join_enabled: boolean | null
+          force_join_message: string | null
+          group_id: string
+          id: string
+          kick_after_violations: number | null
+          kick_non_members: boolean | null
+          max_messages_per_minute: number | null
+          new_member_mute_duration: number | null
+          owner_id: string
+          restrict_new_members: boolean | null
+          updated_at: string | null
+          violation_reset_hours: number | null
+        }
+        Insert: {
+          auto_ban_enabled?: boolean | null
+          auto_delete_enabled?: boolean | null
+          auto_kick_enabled?: boolean | null
+          ban_after_violations?: number | null
+          created_at?: string | null
+          delete_join_messages?: boolean | null
+          delete_spam_messages?: boolean | null
+          filter_forwards?: boolean | null
+          filter_links?: boolean | null
+          filter_media?: boolean | null
+          filter_mentions?: boolean | null
+          force_join_enabled?: boolean | null
+          force_join_message?: string | null
+          group_id: string
+          id?: string
+          kick_after_violations?: number | null
+          kick_non_members?: boolean | null
+          max_messages_per_minute?: number | null
+          new_member_mute_duration?: number | null
+          owner_id: string
+          restrict_new_members?: boolean | null
+          updated_at?: string | null
+          violation_reset_hours?: number | null
+        }
+        Update: {
+          auto_ban_enabled?: boolean | null
+          auto_delete_enabled?: boolean | null
+          auto_kick_enabled?: boolean | null
+          ban_after_violations?: number | null
+          created_at?: string | null
+          delete_join_messages?: boolean | null
+          delete_spam_messages?: boolean | null
+          filter_forwards?: boolean | null
+          filter_links?: boolean | null
+          filter_media?: boolean | null
+          filter_mentions?: boolean | null
+          force_join_enabled?: boolean | null
+          force_join_message?: string | null
+          group_id?: string
+          id?: string
+          kick_after_violations?: number | null
+          kick_non_members?: boolean | null
+          max_messages_per_minute?: number | null
+          new_member_mute_duration?: number | null
+          owner_id?: string
+          restrict_new_members?: boolean | null
+          updated_at?: string | null
+          violation_reset_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_moderation_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_moderation_settings_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_forwards: {
         Row: {
           created_at: string | null
@@ -417,6 +607,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      moderation_logs: {
+        Row: {
+          action: string
+          group_id: string
+          id: string
+          message_text: string | null
+          performed_at: string | null
+          reason: string
+          triggered_by: string | null
+          user_id: number
+          username: string | null
+        }
+        Insert: {
+          action: string
+          group_id: string
+          id?: string
+          message_text?: string | null
+          performed_at?: string | null
+          reason: string
+          triggered_by?: string | null
+          user_id: number
+          username?: string | null
+        }
+        Update: {
+          action?: string
+          group_id?: string
+          id?: string
+          message_text?: string | null
+          performed_at?: string | null
+          reason?: string
+          triggered_by?: string | null
+          user_id?: number
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -480,6 +714,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_violations: {
+        Row: {
+          group_id: string
+          id: string
+          last_violation_at: string | null
+          reset_at: string | null
+          user_id: number
+          violation_count: number | null
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          last_violation_at?: string | null
+          reset_at?: string | null
+          user_id: number
+          violation_count?: number | null
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          last_violation_at?: string | null
+          reset_at?: string | null
+          user_id?: number
+          violation_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_violations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
