@@ -49,6 +49,7 @@ import { broadcastService } from "@/services/broadcastService";
 import { channelService } from "@/services/channelService";
 import { templateService } from "@/services/templateService";
 import type { Tables } from "@/integrations/supabase/types";
+import type { TelegramButton } from "@/services/telegramService";
 import {
   Send,
   Plus,
@@ -64,7 +65,13 @@ import {
   Calendar,
   BookOpen,
   Edit,
+  Link as LinkIcon,
 } from "lucide-react";
+
+interface ButtonRow {
+  id: string;
+  buttons: TelegramButton[];
+}
 
 export default function BroadcastPage() {
   const { toast } = useToast();
@@ -85,6 +92,7 @@ export default function BroadcastPage() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [buttonRows, setButtonRows] = useState<ButtonRow[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     message: "",
@@ -150,12 +158,14 @@ export default function BroadcastPage() {
     setScheduleEnabled(false);
     setScheduledDate("");
     setScheduledTime("");
+    setButtonRows([]);
     setIsCreateDialogOpen(true);
   };
 
   const openTemplateDialog = () => {
     setTemplateFormData({ name: "", message: "", caption: "" });
     setSelectedTemplate(null);
+    setButtonRows([]);
     setIsTemplateDialogOpen(true);
   };
 
@@ -166,6 +176,18 @@ export default function BroadcastPage() {
       message: template.message,
       caption: template.caption || "",
     });
+    
+    // Load buttons from template
+    if (template.buttons) {
+      const loadedButtons = (template.buttons as any).map((row: TelegramButton[], index: number) => ({
+        id: `row-${Date.now()}-${index}`,
+        buttons: row,
+      }));
+      setButtonRows(loadedButtons);
+    } else {
+      setButtonRows([]);
+    }
+    
     setIsTemplateDialogOpen(true);
   };
 
@@ -211,6 +233,68 @@ export default function BroadcastPage() {
     setMediaPreview(null);
   };
 
+  const addButtonRow = () => {
+    setButtonRows([
+      ...buttonRows,
+      {
+        id: `row-${Date.now()}`,
+        buttons: [{ text: "", url: "" }],
+      },
+    ]);
+  };
+
+  const addButtonToRow = (rowId: string) => {
+    setButtonRows(
+      buttonRows.map((row) =>
+        row.id === rowId
+          ? { ...row, buttons: [...row.buttons, { text: "", url: "" }] }
+          : row
+      )
+    );
+  };
+
+  const updateButton = (
+    rowId: string,
+    buttonIndex: number,
+    field: "text" | "url",
+    value: string
+  ) => {
+    setButtonRows(
+      buttonRows.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              buttons: row.buttons.map((btn, idx) =>
+                idx === buttonIndex ? { ...btn, [field]: value } : btn
+              ),
+            }
+          : row
+      )
+    );
+  };
+
+  const removeButton = (rowId: string, buttonIndex: number) => {
+    setButtonRows(
+      buttonRows.map((row) =>
+        row.id === rowId
+          ? { ...row, buttons: row.buttons.filter((_, idx) => idx !== buttonIndex) }
+          : row
+      ).filter((row) => row.buttons.length > 0)
+    );
+  };
+
+  const removeButtonRow = (rowId: string) => {
+    setButtonRows(buttonRows.filter((row) => row.id !== rowId));
+  };
+
+  const getButtonsArray = (): TelegramButton[][] | undefined => {
+    const validRows = buttonRows
+      .map((row) => row.buttons.filter((btn) => btn.text.trim() && btn.url?.trim()))
+      .filter((row) => row.length > 0);
+
+    return validRows.length > 0 ? validRows : undefined;
+  };
+
   const applyTemplate = (template: Tables<"broadcast_templates">) => {
     setFormData({
       ...formData,
@@ -218,6 +302,16 @@ export default function BroadcastPage() {
       caption: template.caption || "",
     });
     setMediaType(template.media_type as "text" | "photo" | "document");
+    
+    // Apply buttons from template
+    if (template.buttons) {
+      const loadedButtons = (template.buttons as any).map((row: TelegramButton[], index: number) => ({
+        id: `row-${Date.now()}-${index}`,
+        buttons: row,
+      }));
+      setButtonRows(loadedButtons);
+    }
+    
     toast({
       title: "Template Applied",
       description: `"${template.name}" has been applied to your broadcast`,
@@ -298,6 +392,8 @@ export default function BroadcastPage() {
         scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
       }
 
+      const buttons = getButtonsArray();
+
       const { error } = await broadcastService.createBroadcast({
         title: formData.title,
         message: formData.message,
@@ -308,6 +404,7 @@ export default function BroadcastPage() {
         media_filename: mediaFilename || undefined,
         caption: formData.caption || undefined,
         scheduled_at: scheduledAt || undefined,
+        buttons: buttons,
       });
 
       if (error) {
@@ -358,11 +455,14 @@ export default function BroadcastPage() {
 
     setIsLoading(true);
 
+    const buttons = getButtonsArray();
+
     if (selectedTemplate) {
       const { error } = await templateService.updateTemplate(selectedTemplate.id, {
         name: templateFormData.name,
         message: templateFormData.message,
         caption: templateFormData.caption,
+        buttons: buttons,
       });
 
       if (error) {
@@ -384,6 +484,7 @@ export default function BroadcastPage() {
         name: templateFormData.name,
         message: templateFormData.message,
         caption: templateFormData.caption,
+        buttons: buttons,
       });
 
       if (error) {
@@ -686,6 +787,12 @@ export default function BroadcastPage() {
                                   {broadcast.media_type === "document" && "📄 "}
                                   {broadcast.caption || broadcast.message}
                                 </div>
+                                {broadcast.buttons && (broadcast.buttons as any).length > 0 && (
+                                  <Badge variant="outline" className="mt-1 text-xs">
+                                    <LinkIcon className="mr-1 h-3 w-3" />
+                                    {(broadcast.buttons as any).reduce((total: number, row: any) => total + row.length, 0)} buttons
+                                  </Badge>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -782,9 +889,17 @@ export default function BroadcastPage() {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <h3 className="font-semibold text-foreground">{template.name}</h3>
-                            <Badge variant="outline" className="mt-1 capitalize text-xs">
-                              {template.media_type}
-                            </Badge>
+                            <div className="flex gap-2 mt-1">
+                              <Badge variant="outline" className="capitalize text-xs">
+                                {template.media_type}
+                              </Badge>
+                              {template.buttons && (template.buttons as any).length > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  <LinkIcon className="mr-1 h-3 w-3" />
+                                  {(template.buttons as any).reduce((total: number, row: any) => total + row.length, 0)} buttons
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           <div className="flex gap-1">
                             <Button
@@ -829,7 +944,7 @@ export default function BroadcastPage() {
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Broadcast</DialogTitle>
               <DialogDescription>
@@ -993,6 +1108,90 @@ export default function BroadcastPage() {
               )}
 
               <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Inline Buttons (Optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addButtonRow}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Row
+                  </Button>
+                </div>
+                
+                {buttonRows.length > 0 && (
+                  <div className="space-y-3 border border-border rounded-lg p-4">
+                    {buttonRows.map((row, rowIndex) => (
+                      <div key={row.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Row {rowIndex + 1}</Label>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => addButtonToRow(row.id)}
+                              className="h-7 text-xs"
+                            >
+                              <Plus className="mr-1 h-3 w-3" />
+                              Button
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeButtonRow(row.id)}
+                              className="h-7 text-xs text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          {row.buttons.map((button, btnIndex) => (
+                            <div key={btnIndex} className="flex gap-2">
+                              <Input
+                                placeholder="Button text"
+                                value={button.text}
+                                onChange={(e) =>
+                                  updateButton(row.id, btnIndex, "text", e.target.value)
+                                }
+                                className="flex-1"
+                              />
+                              <Input
+                                placeholder="URL (https://...)"
+                                value={button.url || ""}
+                                onChange={(e) =>
+                                  updateButton(row.id, btnIndex, "url", e.target.value)
+                                }
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeButton(row.id, btnIndex)}
+                                className="h-10 w-10 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  Buttons will appear below the message. Each row can have multiple buttons side by side.
+                </p>
+              </div>
+
+              <div>
                 <div className="flex items-center space-x-2 mb-2">
                   <Checkbox
                     id="schedule"
@@ -1076,7 +1275,7 @@ export default function BroadcastPage() {
         </Dialog>
 
         <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedTemplate ? "Edit Template" : "Create New Template"}
@@ -1117,6 +1316,86 @@ export default function BroadcastPage() {
                   value={templateFormData.caption}
                   onChange={(e) => setTemplateFormData({ ...templateFormData, caption: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Inline Buttons (Optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addButtonRow}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Row
+                  </Button>
+                </div>
+                
+                {buttonRows.length > 0 && (
+                  <div className="space-y-3 border border-border rounded-lg p-4">
+                    {buttonRows.map((row, rowIndex) => (
+                      <div key={row.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Row {rowIndex + 1}</Label>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => addButtonToRow(row.id)}
+                              className="h-7 text-xs"
+                            >
+                              <Plus className="mr-1 h-3 w-3" />
+                              Button
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeButtonRow(row.id)}
+                              className="h-7 text-xs text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          {row.buttons.map((button, btnIndex) => (
+                            <div key={btnIndex} className="flex gap-2">
+                              <Input
+                                placeholder="Button text"
+                                value={button.text}
+                                onChange={(e) =>
+                                  updateButton(row.id, btnIndex, "text", e.target.value)
+                                }
+                                className="flex-1"
+                              />
+                              <Input
+                                placeholder="URL (https://...)"
+                                value={button.url || ""}
+                                onChange={(e) =>
+                                  updateButton(row.id, btnIndex, "url", e.target.value)
+                                }
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeButton(row.id, btnIndex)}
+                                className="h-10 w-10 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
