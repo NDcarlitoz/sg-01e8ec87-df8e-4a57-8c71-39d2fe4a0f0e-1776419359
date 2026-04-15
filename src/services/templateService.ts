@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import type { TelegramButton } from "./telegramService";
 
 export const templateService = {
   /**
@@ -23,11 +24,13 @@ export const templateService = {
   async createTemplate(templateData: {
     name: string;
     message: string;
-    media_type?: string;
-    media_url?: string;
-    media_filename?: string;
     caption?: string;
-  }): Promise<{ data: Tables<"broadcast_templates"> | null; error: string | null }> {
+    media_type?: string;
+    buttons?: TelegramButton[][];
+  }): Promise<{
+    data: Tables<"broadcast_templates"> | null;
+    error: string | null;
+  }> {
     const { data: authData } = await supabase.auth.getSession();
     const userId = authData.session?.user.id;
 
@@ -41,10 +44,9 @@ export const templateService = {
         user_id: userId,
         name: templateData.name,
         message: templateData.message,
-        media_type: templateData.media_type || "text",
-        media_url: templateData.media_url,
-        media_filename: templateData.media_filename,
         caption: templateData.caption,
+        media_type: templateData.media_type || "text",
+        buttons: templateData.buttons as any,
       })
       .select()
       .single();
@@ -60,21 +62,22 @@ export const templateService = {
     templateData: {
       name: string;
       message: string;
-      media_type?: string;
-      media_url?: string;
-      media_filename?: string;
       caption?: string;
+      media_type?: string;
+      buttons?: TelegramButton[][];
     }
-  ): Promise<{ data: Tables<"broadcast_templates"> | null; error: string | null }> {
+  ): Promise<{
+    data: Tables<"broadcast_templates"> | null;
+    error: string | null;
+  }> {
     const { data, error } = await supabase
       .from("broadcast_templates")
       .update({
         name: templateData.name,
         message: templateData.message,
-        media_type: templateData.media_type,
-        media_url: templateData.media_url,
-        media_filename: templateData.media_filename,
         caption: templateData.caption,
+        media_type: templateData.media_type,
+        buttons: templateData.buttons as any,
       })
       .eq("id", id)
       .select()

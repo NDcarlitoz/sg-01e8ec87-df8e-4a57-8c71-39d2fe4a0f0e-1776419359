@@ -31,6 +31,12 @@ interface TelegramMessage {
   date: number;
 }
 
+export interface TelegramButton {
+  text: string;
+  url?: string;
+  callback_data?: string;
+}
+
 export const telegramService = {
   /**
    * Get bot info to verify token
@@ -51,61 +57,85 @@ export const telegramService = {
   },
 
   /**
-   * Send text message to a chat
+   * Send message to chat with optional inline buttons
    */
   async sendMessage(
     botToken: string,
     chatId: string | number,
     text: string,
-    options?: {
-      parse_mode?: "Markdown" | "HTML";
-      disable_notification?: boolean;
-    }
-  ): Promise<{ data: TelegramMessage | null; error: string | null }> {
+    buttons?: TelegramButton[][]
+  ): Promise<{ data: any; error: string | null }> {
     try {
-      const response = await fetch(`${TELEGRAM_API_BASE}${botToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          ...options,
-        }),
-      });
-      
-      const data: TelegramResponse<TelegramMessage> = await response.json();
-      
-      if (!data.ok) {
-        return { data: null, error: data.description || "Failed to send message" };
+      const payload: any = {
+        chat_id: chatId,
+        text: text,
+        parse_mode: "HTML",
+      };
+
+      if (buttons && buttons.length > 0) {
+        payload.reply_markup = {
+          inline_keyboard: buttons,
+        };
       }
-      
-      return { data: data.result || null, error: null };
+
+      const response = await fetch(
+        `${TELEGRAM_API_BASE}${botToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        return {
+          data: null,
+          error: data.description || "Failed to send message",
+        };
+      }
+
+      return { data: data.result, error: null };
     } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : "Unknown error" };
+      console.error("Send message error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   },
 
   /**
-   * Send photo to chat
+   * Send photo to chat with optional inline buttons
    */
   async sendPhoto(
     botToken: string,
     chatId: string | number,
     photoUrl: string,
-    caption?: string
+    caption?: string,
+    buttons?: TelegramButton[][]
   ): Promise<{ data: any; error: string | null }> {
     try {
+      const payload: any = {
+        chat_id: chatId,
+        photo: photoUrl,
+        caption: caption || "",
+        parse_mode: "HTML",
+      };
+
+      if (buttons && buttons.length > 0) {
+        payload.reply_markup = {
+          inline_keyboard: buttons,
+        };
+      }
+
       const response = await fetch(
         `${TELEGRAM_API_BASE}${botToken}/sendPhoto`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            photo: photoUrl,
-            caption: caption || "",
-            parse_mode: "HTML",
-          }),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -129,27 +159,36 @@ export const telegramService = {
   },
 
   /**
-   * Send document to chat
+   * Send document to chat with optional inline buttons
    */
   async sendDocument(
     botToken: string,
     chatId: string | number,
     documentUrl: string,
     caption?: string,
-    filename?: string
+    filename?: string,
+    buttons?: TelegramButton[][]
   ): Promise<{ data: any; error: string | null }> {
     try {
+      const payload: any = {
+        chat_id: chatId,
+        document: documentUrl,
+        caption: caption || "",
+        parse_mode: "HTML",
+      };
+
+      if (buttons && buttons.length > 0) {
+        payload.reply_markup = {
+          inline_keyboard: buttons,
+        };
+      }
+
       const response = await fetch(
         `${TELEGRAM_API_BASE}${botToken}/sendDocument`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            document: documentUrl,
-            caption: caption || "",
-            parse_mode: "HTML",
-          }),
+          body: JSON.stringify(payload),
         }
       );
 

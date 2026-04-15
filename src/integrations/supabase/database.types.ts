@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -58,6 +58,7 @@ export type Database = {
       }
       broadcast_templates: {
         Row: {
+          buttons: Json | null
           caption: string | null
           created_at: string | null
           id: string
@@ -70,6 +71,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          buttons?: Json | null
           caption?: string | null
           created_at?: string | null
           id?: string
@@ -82,6 +84,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          buttons?: Json | null
           caption?: string | null
           created_at?: string | null
           id?: string
@@ -97,6 +100,7 @@ export type Database = {
       }
       broadcasts: {
         Row: {
+          buttons: Json | null
           caption: string | null
           created_at: string | null
           failed_count: number | null
@@ -117,6 +121,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          buttons?: Json | null
           caption?: string | null
           created_at?: string | null
           failed_count?: number | null
@@ -137,6 +142,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          buttons?: Json | null
           caption?: string | null
           created_at?: string | null
           failed_count?: number | null

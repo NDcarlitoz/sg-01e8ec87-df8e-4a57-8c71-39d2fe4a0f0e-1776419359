@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { telegramService } from "./telegramService";
+import { telegramService, type TelegramButton } from "./telegramService";
 
 export const broadcastService = {
   /**
@@ -72,6 +72,7 @@ export const broadcastService = {
     media_filename?: string;
     caption?: string;
     scheduled_at?: string;
+    buttons?: TelegramButton[][];
   }): Promise<{ data: Tables<"broadcasts"> | null; error: string | null }> {
     const { data: authData } = await supabase.auth.getSession();
     const userId = authData.session?.user.id;
@@ -93,6 +94,7 @@ export const broadcastService = {
         media_filename: broadcastData.media_filename,
         caption: broadcastData.caption,
         scheduled_at: broadcastData.scheduled_at,
+        buttons: broadcastData.buttons as any,
         status: "draft",
       })
       .select()
@@ -135,6 +137,8 @@ export const broadcastService = {
       let sentCount = 0;
       let failedCount = 0;
 
+      const buttons = broadcast.buttons as TelegramButton[][] | null;
+
       // Send to each target
       for (const targetId of broadcast.target_ids) {
         let result;
@@ -144,7 +148,8 @@ export const broadcastService = {
             token,
             targetId,
             broadcast.media_url,
-            broadcast.caption || broadcast.message
+            broadcast.caption || broadcast.message,
+            buttons || undefined
           );
         } else if (broadcast.media_type === "document" && broadcast.media_url) {
           result = await telegramService.sendDocument(
@@ -152,13 +157,15 @@ export const broadcastService = {
             targetId,
             broadcast.media_url,
             broadcast.caption || broadcast.message,
-            broadcast.media_filename
+            broadcast.media_filename,
+            buttons || undefined
           );
         } else {
           result = await telegramService.sendMessage(
             token,
             targetId,
-            broadcast.message
+            broadcast.message,
+            buttons || undefined
           );
         }
 
