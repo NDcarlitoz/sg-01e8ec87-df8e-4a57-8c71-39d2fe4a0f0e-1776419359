@@ -464,6 +464,47 @@ export type Database = {
           },
         ]
       }
+      group_boost_settings: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          group_id: string
+          id: string
+          required_invites: number | null
+          unlock_message: string | null
+          updated_at: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          group_id: string
+          id?: string
+          required_invites?: number | null
+          unlock_message?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          group_id?: string
+          id?: string
+          required_invites?: number | null
+          unlock_message?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_boost_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_moderation_settings: {
         Row: {
           auto_ban_enabled: boolean | null
@@ -678,6 +719,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_invite_tracking: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          invites_count: number | null
+          is_unlocked: boolean | null
+          unlocked_at: string | null
+          updated_at: string | null
+          user_id: number
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          invites_count?: number | null
+          is_unlocked?: boolean | null
+          unlocked_at?: string | null
+          updated_at?: string | null
+          user_id: number
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          invites_count?: number | null
+          is_unlocked?: boolean | null
+          unlocked_at?: string | null
+          updated_at?: string | null
+          user_id?: number
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invite_tracking_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "bot_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_segments: {
         Row: {

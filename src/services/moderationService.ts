@@ -465,4 +465,249 @@ export const moderationService = {
 
     return { isMember: true, error: null };
   },
+
+  /**
+   * Get group boost settings
+   */
+  async getBoostSettings(
+    groupId: string
+  ): Promise<{ data: Tables<"group_boost_settings"> | null; error: string | null }> {
+    const { data, error } = await supabase
+      .from("group_boost_settings")
+      .select("*")
+      .eq("group_id", groupId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      return { data: null, error: error.message };
+    }
+
+    return { data: data || null, error: null };
+  },
+
+  /**
+   * Upsert group boost settings
+   */
+  async upsertBoostSettings(
+    groupId: string,
+    settings: {
+      enabled: boolean;
+      required_invites: number;
+      welcome_message?: string;
+      unlock_message?: string;
+    }
+  ): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("group_boost_settings")
+      .upsert({
+        group_id: groupId,
+        enabled: settings.enabled,
+        required_invites: settings.required_invites,
+        welcome_message: settings.welcome_message,
+        unlock_message: settings.unlock_message,
+        updated_at: new Date().toISOString(),
+      });
+
+    return { error: error?.message || null };
+  },
+
+  /**
+   * Get user invite tracking
+   */
+  async getUserInviteTracking(
+    groupId: string,
+    userId: number
+  ): Promise<{ data: Tables<"user_invite_tracking"> | null; error: string | null }> {
+    const { data, error } = await supabase
+      .from("user_invite_tracking")
+      .select("*")
+      .eq("group_id", groupId)
+      .eq("user_id", userId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      return { data: null, error: error.message };
+    }
+
+    return { data: data || null, error: null };
+  },
+
+  /**
+   * Initialize user invite tracking
+   */
+  async initializeUserTracking(
+    groupId: string,
+    userId: number,
+    username?: string
+  ): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("user_invite_tracking")
+      .upsert({
+        group_id: groupId,
+        user_id: userId,
+        username: username,
+        invites_count: 0,
+        is_unlocked: false,
+        updated_at: new Date().toISOString(),
+      });
+
+    return { error: error?.message || null };
+  },
+
+  /**
+   * Increment user invite count
+   */
+  async incrementInviteCount(
+    groupId: string,
+    inviterId: number
+  ): Promise<{ 
+    newCount: number; 
+    isUnlocked: boolean; 
+    error: string | null 
+  }> {
+    // Get current tracking
+    const { data: tracking } = await this.getUserInviteTracking(groupId, inviterId);
+    
+    if (!tracking) {
+      return { newCount: 0, isUnlocked: false, error: "User tracking not found" };
+    }
+
+    // Get boost settings to check required invites
+    const { data: settings } = await this.getBoostSettings(groupId);
+    
+    if (!settings) {
+      return { newCount: 0, isUnlocked: false, error: "Boost settings not found" };
+    }
+
+    const newCount = tracking.invites_count + 1;
+    const isUnlocked = newCount >= settings.required_invites;
+
+    // Update tracking
+    const { error } = await supabase
+      .from("user_invite_tracking")
+      .update({
+        invites_count: newCount,
+        is_unlocked: isUnlocked,
+        unlocked_at: isUnlocked && !tracking.is_unlocked ? new Date().toISOString() : tracking.unlocked_at,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("group_id", groupId)
+      .eq("user_id", inviterId);
+
+    return {
+      newCount,
+      isUnlocked,
+      error: error?.message || null,
+    };
+  },
+
+  /**
+   * Check if user can chat (boost check)
+   */
+  async canUserChat(
+    groupId: string,
+    userId: number
+  ): Promise<{ 
+    canChat: boolean; 
+    reason?: string;
+    invitesNeeded?: number;
+    currentInvites?: number;
+    error: string | null 
+  }> {
+    // Get boost settings
+    const { data: settings } = await this.getBoostSettings(groupId);
+    
+    if (!settings || !settings.enabled) {
+      return { canChat: true, error: null };
+    }
+
+    // Get user tracking
+    const { data: tracking } = await this.getUserInviteTracking(groupId, userId);
+    
+    if (!tracking) {
+      // Initialize tracking for new user
+      await this.initializeUserTracking(groupId, userId);
+      return {
+        canChat: false,
+        reason: "Must invite members first",
+        invitesNeeded: settings.required_invites,
+        currentInvites: 0,
+        error: null,
+      };
+    }
+
+    if (tracking.is_unlocked) {
+      return { canChat: true, error: null };
+    }
+
+    return {
+      canChat: false,
+      reason: "Must invite more members",
+      invitesNeeded: settings.required_invites - tracking.invites_count,
+      currentInvites: tracking.invites_count,
+      error: null,
+    };
+  },
+
+  /**
+   * Get all invite tracking for group
+   */
+  async getGroupInviteStats(
+    groupId: string
+  ): Promise<{ 
+    data: Tables<"user_invite_tracking">[]; 
+    error: string | null 
+  }> {
+    const { data, error } = await supabase
+      .from("user_invite_tracking")
+      .select("*")
+      .eq("group_id", groupId)
+      .order("invites_count", { ascending: false });
+
+    return {
+      data: data || [],
+      error: error?.message || null,
+    };
+  },
+
+  /**
+   * Manually unlock user (admin action)
+   */
+  async manualUnlockUser(
+    groupId: string,
+    userId: number
+  ): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("user_invite_tracking")
+      .update({
+        is_unlocked: true,
+        unlocked_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("group_id", groupId)
+      .eq("user_id", userId);
+
+    return { error: error?.message || null };
+  },
+
+  /**
+   * Reset user invite count
+   */
+  async resetUserInvites(
+    groupId: string,
+    userId: number
+  ): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("user_invite_tracking")
+      .update({
+        invites_count: 0,
+        is_unlocked: false,
+        unlocked_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("group_id", groupId)
+      .eq("user_id", userId);
+
+    return { error: error?.message || null };
+  },
 };
