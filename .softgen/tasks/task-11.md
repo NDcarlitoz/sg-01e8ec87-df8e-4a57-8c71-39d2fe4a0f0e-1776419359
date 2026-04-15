@@ -1,6 +1,6 @@
 ---
 title: Bot Menu Customization System
-status: in_progress
+status: done
 priority: high
 type: feature
 tags: [bot, customization, menu]

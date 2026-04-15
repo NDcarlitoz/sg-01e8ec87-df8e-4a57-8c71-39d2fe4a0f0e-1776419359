@@ -63,7 +63,10 @@ export const menuService = {
     if (error) return { data: [], error };
 
     // Build tree structure
-    const itemsMap = new Map(data.map((item) => [item.id, { ...item, children: [] }]));
+    type MenuItemWithChildren = Tables<"bot_menu_items"> & { children: any[] };
+    const itemsMap = new Map<string, MenuItemWithChildren>(
+      data.map((item) => [item.id, { ...item, children: [] }])
+    );
     const rootItems: any[] = [];
 
     itemsMap.forEach((item) => {
