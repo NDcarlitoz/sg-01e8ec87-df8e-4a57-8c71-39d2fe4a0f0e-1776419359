@@ -61,6 +61,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
+  Users2,
+  UserPlus,
+  Sparkles,
 } from "lucide-react";
 
 export default function ModerationPage() {
@@ -101,6 +104,17 @@ export default function ModerationPage() {
   // Logs state
   const [moderationLogs, setModerationLogs] = useState<Tables<"moderation_logs">[]>([]);
 
+  // Group Booster state
+  const [boostSettings, setBoostSettings] = useState<Tables<"group_boost_settings"> | null>(null);
+  const [boostForm, setBoostForm] = useState({
+    enabled: false,
+    required_invites: 5,
+    welcome_message: "Welcome! To chat in this group, please invite {required} members first. Your progress: {current}/{required}",
+    unlock_message: "🎉 Congratulations! You can now chat freely in the group. Thank you for inviting {count} members!",
+  });
+  const [inviteStats, setInviteStats] = useState<Tables<"user_invite_tracking">[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
   // Delete dialogs state
   const [deleteWordId, setDeleteWordId] = useState<string | null>(null);
   const [deleteChannelId, setDeleteChannelId] = useState<string | null>(null);
@@ -116,6 +130,8 @@ export default function ModerationPage() {
       loadBannedWords();
       loadForceJoinChannels();
       loadModerationLogs();
+      loadBoostSettings();
+      loadInviteStats();
     }
   }, [selectedGroup]);
 
@@ -169,6 +185,28 @@ export default function ModerationPage() {
     const { data, error } = await moderationService.getModerationLogs(selectedGroup, 50);
     if (!error && data) {
       setModerationLogs(data);
+    }
+  };
+
+  const loadBoostSettings = async () => {
+    const { data, error } = await moderationService.getBoostSettings(selectedGroup);
+    if (!error && data) {
+      setBoostSettings(data);
+      setBoostForm({
+        auto_delete_enabled: data.auto_delete_enabled,
+        auto_kick_enabled: data.auto_kick_enabled,
+        auto_ban_enabled: data.auto_ban_enabled,
+        kick_after_violations: data.kick_after_violations,
+        ban_after_violations: data.ban_after_violations,
+        violation_reset_hours: data.violation_reset_hours,
+      });
+    }
+  };
+
+  const loadInviteStats = async () => {
+    const { data, error } = await moderationService.getGroupInviteStats(selectedGroup);
+    if (!error && data) {
+      setInviteStats(data);
     }
   };
 
@@ -426,10 +464,11 @@ export default function ModerationPage() {
 
               {selectedGroup && (
                 <Tabs defaultValue="settings" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="settings">Settings</TabsTrigger>
                     <TabsTrigger value="banned-words">Banned Words</TabsTrigger>
                     <TabsTrigger value="force-join">Force Join</TabsTrigger>
+                    <TabsTrigger value="booster">Group Booster</TabsTrigger>
                     <TabsTrigger value="logs">Logs</TabsTrigger>
                   </TabsList>
 
@@ -787,6 +826,256 @@ export default function ModerationPage() {
                       )}
                     </Card>
                   </TabsContent>
+
+                  {/* Group Booster Tab */}
+                  <TabsContent value="booster" className="space-y-6">
+                    {/* Booster Settings Card */}
+                    <Card className="p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <Sparkles className="h-6 w-6 text-accent" />
+                        <div>
+                          <h2 className="font-heading text-xl font-semibold">Group Booster Settings</h2>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Require users to invite members before they can chat in the group
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        {/* Enable/Disable */}
+                        <div className="flex items-start justify-between space-x-4 rounded-lg border p-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <UserPlus className="h-5 w-5 text-accent" />
+                              <h3 className="font-semibold">Enable Group Booster</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              When enabled, new users must invite members before chatting
+                            </p>
+                          </div>
+                          <Switch
+                            checked={boostForm.enabled}
+                            onCheckedChange={(checked) =>
+                              setBoostForm({ ...boostForm, enabled: checked })
+                            }
+                          />
+                        </div>
+
+                        {/* Required Invites */}
+                        {boostForm.enabled && (
+                          <>
+                            <div className="rounded-lg border p-4">
+                              <h3 className="font-semibold mb-1">Required Invites</h3>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Number of members each user must invite (1-30)
+                              </p>
+                              <div className="flex items-center gap-4">
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="30"
+                                  value={boostForm.required_invites}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 1;
+                                    setBoostForm({
+                                      ...boostForm,
+                                      required_invites: Math.min(Math.max(val, 1), 30),
+                                    });
+                                  }}
+                                  className="w-32"
+                                />
+                                <span className="text-sm text-muted-foreground">members</span>
+                              </div>
+                            </div>
+
+                            {/* Welcome Message */}
+                            <div className="rounded-lg border p-4">
+                              <h3 className="font-semibold mb-1">Welcome Message</h3>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                Message sent when user tries to chat before unlocking
+                              </p>
+                              <Textarea
+                                value={boostForm.welcome_message}
+                                onChange={(e) =>
+                                  setBoostForm({ ...boostForm, welcome_message: e.target.value })
+                                }
+                                rows={3}
+                                placeholder="Enter welcome message..."
+                              />
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Variables: {"{required}"} = required invites, {"{current}"} = current invites
+                              </p>
+                            </div>
+
+                            {/* Unlock Message */}
+                            <div className="rounded-lg border p-4">
+                              <h3 className="font-semibold mb-1">Unlock Message</h3>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                Message sent when user reaches invite quota
+                              </p>
+                              <Textarea
+                                value={boostForm.unlock_message}
+                                onChange={(e) =>
+                                  setBoostForm({ ...boostForm, unlock_message: e.target.value })
+                                }
+                                rows={3}
+                                placeholder="Enter unlock message..."
+                              />
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Variables: {"{count}"} = total invites
+                              </p>
+                            </div>
+                          </>
+                        )}
+
+                        <Button onClick={handleSaveBoostSettings} disabled={isLoading} className="w-full">
+                          <Save className="mr-2 h-4 w-4" />
+                          {isLoading ? "Saving..." : "Save Booster Settings"}
+                        </Button>
+                      </div>
+                    </Card>
+
+                    {/* Invite Stats Card */}
+                    {boostForm.enabled && (
+                      <Card className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h2 className="font-heading text-xl font-semibold">Invite Statistics</h2>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Track user invite progress and unlock status
+                            </p>
+                          </div>
+                          <Users2 className="h-8 w-8 text-primary" />
+                        </div>
+
+                        {/* Stats Summary */}
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                          <div className="rounded-lg border p-4">
+                            <div className="text-sm text-muted-foreground mb-1">Total Users</div>
+                            <div className="text-2xl font-bold">{inviteStats.length}</div>
+                          </div>
+                          <div className="rounded-lg border p-4">
+                            <div className="text-sm text-muted-foreground mb-1">Unlocked</div>
+                            <div className="text-2xl font-bold text-success">
+                              {inviteStats.filter((s) => s.is_unlocked).length}
+                            </div>
+                          </div>
+                          <div className="rounded-lg border p-4">
+                            <div className="text-sm text-muted-foreground mb-1">Locked</div>
+                            <div className="text-2xl font-bold text-warning">
+                              {inviteStats.filter((s) => !s.is_unlocked).length}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Users Table */}
+                        {inviteStats.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <Users2 className="h-12 w-12 text-muted-foreground mb-3" />
+                            <h3 className="font-semibold text-foreground">No tracking data yet</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              User invite data will appear when members join
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>User</TableHead>
+                                  <TableHead>Invites</TableHead>
+                                  <TableHead>Progress</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Unlocked At</TableHead>
+                                  <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {inviteStats.map((stat) => (
+                                  <TableRow key={stat.id}>
+                                    <TableCell>
+                                      <div>
+                                        <div className="font-medium">
+                                          {stat.username ? `@${stat.username}` : "Unknown"}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          ID: {stat.user_id}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold">{stat.invites_count}</span>
+                                        <span className="text-muted-foreground">
+                                          / {boostForm.required_invites}
+                                        </span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="w-full bg-muted rounded-full h-2">
+                                        <div
+                                          className={`h-2 rounded-full ${
+                                            stat.is_unlocked ? "bg-success" : "bg-accent"
+                                          }`}
+                                          style={{
+                                            width: `${Math.min(
+                                              (stat.invites_count / boostForm.required_invites) * 100,
+                                              100
+                                            )}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {stat.is_unlocked ? (
+                                        <Badge variant="default" className="bg-success">
+                                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                                          Unlocked
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="border-warning text-warning">
+                                          <XCircle className="mr-1 h-3 w-3" />
+                                          Locked
+                                        </Badge>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                      {stat.unlocked_at
+                                        ? new Date(stat.unlocked_at).toLocaleString()
+                                        : "—"}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        {!stat.is_unlocked && (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setSelectedUserId(stat.user_id)}
+                                            className="h-8 text-accent hover:text-accent"
+                                          >
+                                            Unlock
+                                          </Button>
+                                        )}
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleResetInvites(stat.user_id)}
+                                          className="h-8 text-destructive hover:text-destructive"
+                                          disabled={isLoading}
+                                        >
+                                          Reset
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </Card>
+                    )}
+                  </TabsContent>
                 </Tabs>
               )}
             </>
@@ -982,6 +1271,29 @@ export default function ModerationPage() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isLoading ? "Removing..." : "Remove"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Manual Unlock Dialog */}
+        <AlertDialog open={!!selectedUserId} onOpenChange={() => setSelectedUserId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Manually Unlock User</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will allow the user to chat freely in the group without meeting the invite
+                requirement. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => selectedUserId && handleManualUnlock(selectedUserId)}
+                disabled={isLoading}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {isLoading ? "Unlocking..." : "Unlock User"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
