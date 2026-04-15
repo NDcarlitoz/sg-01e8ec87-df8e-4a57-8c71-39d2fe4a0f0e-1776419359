@@ -100,6 +100,7 @@ export default function BroadcastPage() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [pinMessage, setPinMessage] = useState(false);
   const [buttonRows, setButtonRows] = useState<ButtonRow[]>([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -195,6 +196,7 @@ export default function BroadcastPage() {
     setScheduleEnabled(false);
     setScheduledDate("");
     setScheduledTime("");
+    setPinMessage(false);
     setButtonRows([]);
     setIsCreateDialogOpen(true);
   };
@@ -440,6 +442,7 @@ export default function BroadcastPage() {
         caption: formData.caption || undefined,
         scheduled_at: scheduledAt || undefined,
         buttons: buttons,
+        pin_message: pinMessage,
       });
 
       if (error) {
@@ -912,6 +915,11 @@ export default function BroadcastPage() {
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {new Date(broadcast.created_at).toLocaleDateString()}
+                              {broadcast.pin_message && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  📌 Pinned
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -1318,6 +1326,17 @@ export default function BroadcastPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="pinMessage"
+                  checked={pinMessage}
+                  onCheckedChange={(checked) => setPinMessage(!!checked)}
+                />
+                <Label htmlFor="pinMessage" className="font-normal cursor-pointer">
+                  Pin message after sending (for channels/groups)
+                </Label>
               </div>
 
               <div>
