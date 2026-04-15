@@ -193,12 +193,10 @@ export default function ModerationPage() {
     if (!error && data) {
       setBoostSettings(data);
       setBoostForm({
-        auto_delete_enabled: data.auto_delete_enabled,
-        auto_kick_enabled: data.auto_kick_enabled,
-        auto_ban_enabled: data.auto_ban_enabled,
-        kick_after_violations: data.kick_after_violations,
-        ban_after_violations: data.ban_after_violations,
-        violation_reset_hours: data.violation_reset_hours,
+        enabled: data.enabled ?? false,
+        required_invites: data.required_invites ?? 5,
+        welcome_message: data.welcome_message || "Welcome! To chat in this group, please invite {required} members first. Your progress: {current}/{required}",
+        unlock_message: data.unlock_message || "🎉 Congratulations! You can now chat freely in the group. Thank you for inviting {count} members!",
       });
     }
   };
@@ -208,6 +206,77 @@ export default function ModerationPage() {
     if (!error && data) {
       setInviteStats(data);
     }
+  };
+
+  const handleSaveBoostSettings = async () => {
+    if (!selectedGroup) return;
+
+    setIsLoading(true);
+    const { error } = await moderationService.upsertBoostSettings(
+      selectedGroup,
+      boostForm
+    );
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Group booster settings saved successfully",
+      });
+      loadBoostSettings();
+    }
+    setIsLoading(false);
+  };
+
+  const handleManualUnlock = async (userId: number) => {
+    if (!selectedGroup) return;
+
+    setIsLoading(true);
+    const { error } = await moderationService.manualUnlockUser(selectedGroup, userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "User unlocked successfully",
+      });
+      loadInviteStats();
+    }
+    setIsLoading(false);
+    setSelectedUserId(null);
+  };
+
+  const handleResetInvites = async (userId: number) => {
+    if (!selectedGroup) return;
+
+    setIsLoading(true);
+    const { error } = await moderationService.resetUserInvites(selectedGroup, userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "User invites reset successfully",
+      });
+      loadInviteStats();
+    }
+    setIsLoading(false);
+    setSelectedUserId(null);
   };
 
   const handleSaveSettings = async () => {
