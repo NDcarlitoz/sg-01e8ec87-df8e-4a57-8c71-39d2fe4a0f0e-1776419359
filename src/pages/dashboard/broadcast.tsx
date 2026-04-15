@@ -50,6 +50,7 @@ import { channelService } from "@/services/channelService";
 import { templateService } from "@/services/templateService";
 import { userService } from "@/services/userService";
 import { groupService } from "@/services/groupService";
+import { forwardService } from "@/services/forwardService";
 import type { Tables } from "@/integrations/supabase/types";
 import type { TelegramButton } from "@/services/telegramService";
 import {
@@ -71,6 +72,7 @@ import {
   Users,
   MessageSquare,
   Tv,
+  Forward,
 } from "lucide-react";
 
 interface ButtonRow {
@@ -81,16 +83,20 @@ interface ButtonRow {
 export default function BroadcastPage() {
   const { toast } = useToast();
   const [broadcasts, setBroadcasts] = useState<Tables<"broadcasts">[]>([]);
+  const [forwards, setForwards] = useState<Tables<"message_forwards">[]>([]);
   const [channels, setChannels] = useState<Tables<"channels">[]>([]);
   const [users, setUsers] = useState<Tables<"bot_users">[]>([]);
   const [groups, setGroups] = useState<Tables<"bot_groups">[]>([]);
   const [templates, setTemplates] = useState<Tables<"broadcast_templates">[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isForwardDialogOpen, setIsForwardDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isForwardDeleteDialogOpen, setIsForwardDeleteDialogOpen] = useState(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isTemplateDeleteDialogOpen, setIsTemplateDeleteDialogOpen] = useState(false);
   const [selectedBroadcast, setSelectedBroadcast] = useState<Tables<"broadcasts"> | null>(null);
+  const [selectedForward, setSelectedForward] = useState<Tables<"message_forwards"> | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Tables<"broadcast_templates"> | null>(null);
   const [targetType, setTargetType] = useState<"channels" | "users" | "groups">("channels");
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
@@ -107,6 +113,11 @@ export default function BroadcastPage() {
     message: "",
     caption: "",
   });
+  const [forwardFormData, setForwardFormData] = useState({
+    title: "",
+    sourceChatId: "",
+    sourceMessageId: "",
+  });
   const [templateFormData, setTemplateFormData] = useState({
     name: "",
     message: "",
@@ -115,6 +126,7 @@ export default function BroadcastPage() {
 
   useEffect(() => {
     loadBroadcasts();
+    loadForwards();
     loadChannels();
     loadUsers();
     loadGroups();
@@ -131,6 +143,19 @@ export default function BroadcastPage() {
       });
     } else if (data) {
       setBroadcasts(data);
+    }
+  };
+
+  const loadForwards = async () => {
+    const { data, error } = await forwardService.getForwards();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else if (data) {
+      setForwards(data);
     }
   };
 
@@ -199,6 +224,16 @@ export default function BroadcastPage() {
     setPinMessage(false);
     setButtonRows([]);
     setIsCreateDialogOpen(true);
+  };
+
+  const openForwardDialog = () => {
+    setForwardFormData({ title: "", sourceChatId: "", sourceMessageId: "" });
+    setTargetType("channels");
+    setSelectedTargets([]);
+    setScheduleEnabled(false);
+    setScheduledDate("");
+    setScheduledTime("");
+    setIsForwardDialogOpen(true);
   };
 
   const openTemplateDialog = () => {
@@ -472,6 +507,87 @@ export default function BroadcastPage() {
     setIsLoading(false);
   };
 
+  const handleCreateForward = async () => {
+    if (!forwardFormData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a title",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!forwardFormData.sourceChatId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter source chat ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!forwardFormData.sourceMessageId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter source message ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedTargets.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one target",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      let scheduledAt = null;
+      if (scheduleEnabled && scheduledDate && scheduledTime) {
+        scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+      }
+
+      const { error } = await forwardService.createForward({
+        title: forwardFormData.title,
+        source_chat_id: forwardFormData.sourceChatId,
+        source_message_id: parseInt(forwardFormData.sourceMessageId),
+        target_type: targetType,
+        target_ids: selectedTargets,
+        scheduled_at: scheduledAt || undefined,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: scheduleEnabled 
+            ? `Forward scheduled for ${new Date(scheduledAt!).toLocaleString()}`
+            : "Forward created successfully as draft",
+        });
+        setIsForwardDialogOpen(false);
+        loadForwards();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create forward",
+        variant: "destructive",
+      });
+    }
+
+    setIsLoading(false);
+  };
+
   const handleSaveTemplate = async () => {
     if (!templateFormData.name.trim()) {
       toast({
@@ -591,9 +707,36 @@ export default function BroadcastPage() {
     setIsLoading(false);
   };
 
+  const handleExecuteForward = async (forward: Tables<"message_forwards">) => {
+    setIsLoading(true);
+
+    const { success, error } = await forwardService.executeForward(forward.id);
+
+    if (error || !success) {
+      toast({
+        title: "Error",
+        description: error || "Failed to forward messages",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Messages forwarded successfully",
+      });
+      loadForwards();
+    }
+
+    setIsLoading(false);
+  };
+
   const openDeleteDialog = (broadcast: Tables<"broadcasts">) => {
     setSelectedBroadcast(broadcast);
     setIsDeleteDialogOpen(true);
+  };
+
+  const openForwardDeleteDialog = (forward: Tables<"message_forwards">) => {
+    setSelectedForward(forward);
+    setIsForwardDeleteDialogOpen(true);
   };
 
   const openTemplateDeleteDialog = (template: Tables<"broadcast_templates">) => {
@@ -626,6 +769,31 @@ export default function BroadcastPage() {
     setIsLoading(false);
   };
 
+  const handleDeleteForward = async () => {
+    if (!selectedForward) return;
+
+    setIsLoading(true);
+
+    const { error } = await forwardService.deleteForward(selectedForward.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Forward deleted successfully",
+      });
+      setIsForwardDeleteDialogOpen(false);
+      loadForwards();
+    }
+
+    setIsLoading(false);
+  };
+
   const toggleTargetSelection = (targetId: string) => {
     setSelectedTargets((prev) =>
       prev.includes(targetId)
@@ -651,7 +819,9 @@ export default function BroadcastPage() {
     const variants: Record<string, { variant: any; icon: any }> = {
       draft: { variant: "secondary", icon: Clock },
       sending: { variant: "default", icon: Radio },
+      forwarding: { variant: "default", icon: Forward },
       sent: { variant: "default", icon: CheckCircle2 },
+      completed: { variant: "default", icon: CheckCircle2 },
       failed: { variant: "destructive", icon: XCircle },
     };
 
@@ -727,6 +897,9 @@ export default function BroadcastPage() {
   const scheduledBroadcasts = broadcasts.filter(
     (b) => b.status === "draft" && b.scheduled_at && new Date(b.scheduled_at) > new Date()
   ).length;
+
+  const totalForwards = forwards.length;
+  const completedForwards = forwards.filter((f) => f.status === "completed").length;
 
   return (
     <ProtectedRoute>
@@ -827,6 +1000,7 @@ export default function BroadcastPage() {
           <Tabs defaultValue="broadcasts" className="w-full">
             <TabsList>
               <TabsTrigger value="broadcasts">Broadcasts</TabsTrigger>
+              <TabsTrigger value="forwards">Forwards ({totalForwards})</TabsTrigger>
               <TabsTrigger value="templates">Templates ({templates.length})</TabsTrigger>
             </TabsList>
 
@@ -954,6 +1128,109 @@ export default function BroadcastPage() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="forwards" className="mt-6">
+              <Card>
+                <div className="p-6 flex items-center justify-between">
+                  <h2 className="font-heading text-xl font-semibold text-foreground">
+                    Message Forwards
+                  </h2>
+                  <Button onClick={openForwardDialog}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Forward
+                  </Button>
+                </div>
+
+                {forwards.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="rounded-full bg-muted p-6">
+                      <Forward className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-4 font-heading text-lg font-semibold text-foreground">
+                      No forwards yet
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Forward existing messages to multiple targets
+                    </p>
+                    <Button onClick={openForwardDialog} className="mt-4">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Forward
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Source</TableHead>
+                          <TableHead>Target Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Recipients</TableHead>
+                          <TableHead>Success/Failed</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {forwards.map((forward) => (
+                          <TableRow key={forward.id}>
+                            <TableCell>
+                              <div className="font-medium">{forward.title}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                <div className="font-medium">{forward.source_chat_id}</div>
+                                <div className="text-muted-foreground">
+                                  Message #{forward.source_message_id}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{getTargetTypeBadge(forward.target_type)}</TableCell>
+                            <TableCell>{getStatusBadge(forward.status, forward.scheduled_at)}</TableCell>
+                            <TableCell>{forward.target_ids.length}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <span className="text-success">{forward.forwarded_count || 0}</span>
+                                <span className="text-muted-foreground">/</span>
+                                <span className="text-destructive">{forward.failed_count || 0}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(forward.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {forward.status === "draft" && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleExecuteForward(forward)}
+                                    disabled={isLoading}
+                                    className="gap-1"
+                                  >
+                                    <Forward className="h-4 w-4" />
+                                    Forward
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openForwardDeleteDialog(forward)}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </Card>
+            </TabsContent>
+
             <TabsContent value="templates" className="mt-6">
               <Card>
                 <div className="p-6 flex items-center justify-between">
@@ -1043,6 +1320,7 @@ export default function BroadcastPage() {
           </Tabs>
         </div>
 
+        {/* Create Broadcast Dialog */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -1423,6 +1701,176 @@ export default function BroadcastPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Create Forward Dialog */}
+        <Dialog open={isForwardDialogOpen} onOpenChange={setIsForwardDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Forward Message</DialogTitle>
+              <DialogDescription>
+                Forward an existing message from a channel/group to multiple targets
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="forward-title">Forward Title *</Label>
+                <Input
+                  id="forward-title"
+                  placeholder="e.g., Important Announcement Forward"
+                  value={forwardFormData.title}
+                  onChange={(e) => setForwardFormData({ ...forwardFormData, title: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="source-chat-id">Source Chat ID *</Label>
+                <Input
+                  id="source-chat-id"
+                  placeholder="e.g., @channelname or -1001234567890"
+                  value={forwardFormData.sourceChatId}
+                  onChange={(e) => setForwardFormData({ ...forwardFormData, sourceChatId: e.target.value })}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Channel username (@username) or numeric chat ID
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="source-message-id">Source Message ID *</Label>
+                <Input
+                  id="source-message-id"
+                  type="number"
+                  placeholder="e.g., 123"
+                  value={forwardFormData.sourceMessageId}
+                  onChange={(e) => setForwardFormData({ ...forwardFormData, sourceMessageId: e.target.value })}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The message ID to forward (find it in message details)
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Checkbox
+                    id="forward-schedule"
+                    checked={scheduleEnabled}
+                    onCheckedChange={(checked) => setScheduleEnabled(!!checked)}
+                  />
+                  <Label htmlFor="forward-schedule" className="font-normal cursor-pointer">
+                    Schedule for later
+                  </Label>
+                </div>
+
+                {scheduleEnabled && (
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <Label htmlFor="forward-date">Date</Label>
+                      <Input
+                        id="forward-date"
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="forward-time">Time</Label>
+                      <Input
+                        id="forward-time"
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label>Target Type *</Label>
+                <RadioGroup value={targetType} onValueChange={(value: any) => {
+                  setTargetType(value);
+                  setSelectedTargets([]);
+                }}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="channels" id="forward-target-channels" />
+                    <Label htmlFor="forward-target-channels" className="font-normal cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Tv className="h-4 w-4" />
+                        Channels
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="users" id="forward-target-users" />
+                    <Label htmlFor="forward-target-users" className="font-normal cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Users (Private Chats)
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="groups" id="forward-target-groups" />
+                    <Label htmlFor="forward-target-groups" className="font-normal cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Groups
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div>
+                <Label>Select Targets * ({selectedTargets.length} selected)</Label>
+                <div className="mt-2 space-y-2 max-h-48 overflow-y-auto rounded-lg border p-3">
+                  {getCurrentTargets().length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No active {targetType} available
+                    </p>
+                  ) : (
+                    getCurrentTargets().map((target) => (
+                      <div key={target.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`forward-${target.id}`}
+                          checked={selectedTargets.includes(getTargetId(target))}
+                          onCheckedChange={() => toggleTargetSelection(getTargetId(target))}
+                        />
+                        <Label
+                          htmlFor={`forward-${target.id}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {getTargetName(target)}
+                          {getTargetSecondary(target) && (
+                            <span className="ml-2 text-muted-foreground">
+                              {getTargetSecondary(target)}
+                            </span>
+                          )}
+                        </Label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsForwardDialogOpen(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreateForward} disabled={isLoading}>
+                {isLoading ? "Creating..." : scheduleEnabled ? "Schedule Forward" : "Create & Save as Draft"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Template Dialog */}
         <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -1563,6 +2011,7 @@ export default function BroadcastPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Delete Broadcast Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -1584,6 +2033,29 @@ export default function BroadcastPage() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Delete Forward Dialog */}
+        <AlertDialog open={isForwardDeleteDialogOpen} onOpenChange={setIsForwardDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Forward</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this forward? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteForward}
+                disabled={isLoading}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isLoading ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Template Dialog */}
         <AlertDialog open={isTemplateDeleteDialogOpen} onOpenChange={setIsTemplateDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
