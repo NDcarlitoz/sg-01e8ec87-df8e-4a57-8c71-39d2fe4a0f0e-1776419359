@@ -127,10 +127,10 @@ export const segmentService = {
       return { data: [], error: segmentError?.message || "Segment not found" };
     }
 
-    const filters = segment.filter_conditions as SegmentFilter[];
+    const filters = (segment.filter_conditions as unknown) as SegmentFilter[];
 
     // Build query based on filters
-    let query = supabase.from("bot_users").select("*");
+    let query: any = supabase.from("bot_users").select("*");
 
     for (const filter of filters) {
       switch (filter.operator) {
@@ -186,13 +186,14 @@ export const segmentService = {
    * Add tag to user
    */
   async addUserTag(
-    userId: string,
+    userId: string | number,
     tag: string
   ): Promise<{ error: string | null }> {
+    const numericUserId = Number(userId);
     const { data: user } = await supabase
       .from("bot_users")
       .select("tags")
-      .eq("user_id", userId)
+      .eq("user_id", numericUserId)
       .single();
 
     if (!user) {
@@ -207,7 +208,7 @@ export const segmentService = {
     const { error } = await supabase
       .from("bot_users")
       .update({ tags: [...currentTags, tag] })
-      .eq("user_id", userId);
+      .eq("user_id", numericUserId);
 
     return { error: error?.message || null };
   },
@@ -216,13 +217,14 @@ export const segmentService = {
    * Remove tag from user
    */
   async removeUserTag(
-    userId: string,
+    userId: string | number,
     tag: string
   ): Promise<{ error: string | null }> {
+    const numericUserId = Number(userId);
     const { data: user } = await supabase
       .from("bot_users")
       .select("tags")
-      .eq("user_id", userId)
+      .eq("user_id", numericUserId)
       .single();
 
     if (!user) {
@@ -235,7 +237,7 @@ export const segmentService = {
     const { error } = await supabase
       .from("bot_users")
       .update({ tags: newTags })
-      .eq("user_id", userId);
+      .eq("user_id", numericUserId);
 
     return { error: error?.message || null };
   },

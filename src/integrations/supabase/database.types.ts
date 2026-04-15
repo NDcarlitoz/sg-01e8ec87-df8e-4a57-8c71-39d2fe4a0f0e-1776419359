@@ -172,6 +172,7 @@ export type Database = {
           last_interaction: string | null
           last_name: string | null
           owner_id: string
+          tags: string[] | null
           user_id: number
           username: string | null
         }
@@ -185,6 +186,7 @@ export type Database = {
           last_interaction?: string | null
           last_name?: string | null
           owner_id: string
+          tags?: string[] | null
           user_id: number
           username?: string | null
         }
@@ -198,6 +200,7 @@ export type Database = {
           last_interaction?: string | null
           last_name?: string | null
           owner_id?: string
+          tags?: string[] | null
           user_id?: number
           username?: string | null
         }
@@ -439,6 +442,42 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_segments: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          filter_conditions: Json
+          id: string
+          is_active: boolean | null
+          last_updated_at: string | null
+          member_count: number | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          filter_conditions?: Json
+          id?: string
+          is_active?: boolean | null
+          last_updated_at?: string | null
+          member_count?: number | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          filter_conditions?: Json
+          id?: string
+          is_active?: boolean | null
+          last_updated_at?: string | null
+          member_count?: number | null
+          name?: string
+          user_id?: string
         }
         Relationships: []
       }
