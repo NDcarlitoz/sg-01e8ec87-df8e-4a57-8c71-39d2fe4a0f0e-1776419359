@@ -86,14 +86,31 @@ Reply with your choice!`;
   await sendMessage(botToken, message.chat.id, menuText);
 }
 
-async function saveUserToDatabase(message: TelegramMessage) {
+async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
   try {
-    // Check if user exists
+    // 1. Get bot owner's user_id from bot_tokens table
+    const { data: botData } = await supabase
+      .from("bot_tokens")
+      .select("user_id")
+      .eq("bot_token", botToken)
+      .single();
+
+    const owner_id = botData?.user_id;
+
+    if (!owner_id) {
+      console.error("Bot owner not found for this token");
+      return;
+    }
+
+    // 2. Check if user exists
     const { data: existingUser } = await supabase
       .from("bot_users")
       .select("id")
       .eq("user_id", message.from.id)
+      .eq("owner_id", owner_id)
       .single();
+
+    let botUserId = existingUser?.id;
 
     if (existingUser) {
       // Update last interaction
@@ -103,12 +120,13 @@ async function saveUserToDatabase(message: TelegramMessage) {
           last_interaction: new Date().toISOString(),
           last_seen: new Date().toISOString(),
         })
-        .eq("user_id", message.from.id);
+        .eq("id", existingUser.id);
     } else {
       // Create new user
-      await supabase
+      const { data: newUser, error: insertError } = await supabase
         .from("bot_users")
         .insert({
+          owner_id,
           user_id: message.from.id,
           username: message.from.username || null,
           first_name: message.from.first_name,
@@ -119,22 +137,31 @@ async function saveUserToDatabase(message: TelegramMessage) {
           is_active: true,
           last_interaction: new Date().toISOString(),
           last_seen: new Date().toISOString(),
-        });
+        })
+        .select("id")
+        .single();
+        
+      if (insertError) {
+        console.error("Insert user error:", insertError);
+      }
+      botUserId = newUser?.id;
     }
 
-    // Log interaction
-    await supabase
-      .from("user_interactions")
-      .insert({
-        bot_user_id: existingUser?.id,
-        interaction_type: "message",
-        content: message.text || "",
-        metadata: {
-          message_id: message.message_id,
-          chat_id: message.chat.id,
-          date: message.date,
-        },
-      });
+    if (botUserId) {
+      // Log interaction
+      await supabase
+        .from("user_interactions")
+        .insert({
+          bot_user_id: botUserId,
+          interaction_type: "message",
+          content: message.text || "",
+          metadata: {
+            message_id: message.message_id,
+            chat_id: message.chat.id,
+            date: message.date,
+          },
+        });
+    }
   } catch (error) {
     console.error("Save user error:", error);
   }
@@ -164,7 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Save user to database
-    await saveUserToDatabase(message);
+    await saveUserToDatabase(message, botToken);
 
     // Handle commands
     if (text === "/start") {
