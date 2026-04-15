@@ -20,3 +20,6 @@ Sistem untuk broadcast messages ke private chats, groups, dan channels. Support 
 - [x] Create broadcast history dengan stats (delivered, read, clicked)
 - [x] Create Supabase schema untuk broadcasts table
 - [x] Add progress tracking untuk ongoing broadcasts
+- [x] Enable media support (images and files)
+- [x] Implement scheduled broadcasting with date/time picker
+- [x] Create message templates system (create/edit/delete/apply)
