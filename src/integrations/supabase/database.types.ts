@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -15,6 +15,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      bot_groups: {
+        Row: {
+          chat_id: number
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          member_count: number | null
+          owner_id: string
+          title: string
+          type: string
+          username: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_count?: number | null
+          owner_id: string
+          title: string
+          type: string
+          username?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_count?: number | null
+          owner_id?: string
+          title?: string
+          type?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       bot_tokens: {
         Row: {
           bot_name: string
@@ -55,6 +94,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bot_users: {
+        Row: {
+          created_at: string | null
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          is_bot: boolean | null
+          language_code: string | null
+          last_interaction: string | null
+          last_name: string | null
+          owner_id: string
+          user_id: number
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_bot?: boolean | null
+          language_code?: string | null
+          last_interaction?: string | null
+          last_name?: string | null
+          owner_id: string
+          user_id: number
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_bot?: boolean | null
+          language_code?: string | null
+          last_interaction?: string | null
+          last_name?: string | null
+          owner_id?: string
+          user_id?: number
+          username?: string | null
+        }
+        Relationships: []
       }
       broadcast_templates: {
         Row: {

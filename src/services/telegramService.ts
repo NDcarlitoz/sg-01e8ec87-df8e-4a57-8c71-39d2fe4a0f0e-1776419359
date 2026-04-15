@@ -256,6 +256,74 @@ export const telegramService = {
   },
 
   /**
+   * Get recent updates from bot
+   */
+  async getUpdates(
+    botToken: string,
+    offset?: number
+  ): Promise<{ data: any; error: string | null }> {
+    try {
+      const url = `${TELEGRAM_API_BASE}${botToken}/getUpdates${
+        offset ? `?offset=${offset}` : ""
+      }`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        return {
+          data: null,
+          error: data.description || "Failed to get updates",
+        };
+      }
+
+      return { data: data.result, error: null };
+    } catch (error) {
+      console.error("Get updates error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
+   * Get chat member count
+   */
+  async getChatMemberCount(
+    botToken: string,
+    chatId: string | number
+  ): Promise<{ count: number | null; error: string | null }> {
+    try {
+      const response = await fetch(
+        `${TELEGRAM_API_BASE}${botToken}/getChatMemberCount`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        return {
+          count: null,
+          error: data.description || "Failed to get member count",
+        };
+      }
+
+      return { count: data.result, error: null };
+    } catch (error) {
+      console.error("Get member count error:", error);
+      return {
+        count: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
    * Set webhook for bot updates
    */
   async setWebhook(
