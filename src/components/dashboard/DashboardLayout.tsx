@@ -26,9 +26,11 @@ import {
   Bot,
   Hash,
   UserCog,
+  Zap,
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface DashboardLayoutProps {
   children: ReactNode;

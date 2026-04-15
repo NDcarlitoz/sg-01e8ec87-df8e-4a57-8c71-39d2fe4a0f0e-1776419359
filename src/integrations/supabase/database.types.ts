@@ -15,6 +15,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      auto_reply_rules: {
+        Row: {
+          created_at: string | null
+          delay_seconds: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          match_case_sensitive: boolean | null
+          match_whole_word: boolean | null
+          priority: number | null
+          response_buttons: Json | null
+          response_caption: string | null
+          response_media_url: string | null
+          response_message: string | null
+          response_type: string
+          title: string
+          trigger_type: string
+          trigger_value: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          delay_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          match_case_sensitive?: boolean | null
+          match_whole_word?: boolean | null
+          priority?: number | null
+          response_buttons?: Json | null
+          response_caption?: string | null
+          response_media_url?: string | null
+          response_message?: string | null
+          response_type?: string
+          title: string
+          trigger_type: string
+          trigger_value: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          delay_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          match_case_sensitive?: boolean | null
+          match_whole_word?: boolean | null
+          priority?: number | null
+          response_buttons?: Json | null
+          response_caption?: string | null
+          response_media_url?: string | null
+          response_message?: string | null
+          response_type?: string
+          title?: string
+          trigger_type?: string
+          trigger_value?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bot_groups: {
         Row: {
           chat_id: number
