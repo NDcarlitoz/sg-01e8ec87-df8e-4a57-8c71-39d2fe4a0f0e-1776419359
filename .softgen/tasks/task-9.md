@@ -1,6 +1,6 @@
 ---
 title: Subscriber Segmentation
-status: in_progress
+status: done
 priority: high
 type: feature
 tags: [users, targeting]
@@ -15,8 +15,8 @@ Build user segmentation system untuk group subscribers based on activity, tags, 
 ## Checklist
 - [x] Create user_segments table dengan criteria, filters
 - [x] Add tags column to bot_users untuk manual tagging
-- [ ] Build segmentService dengan dynamic query builder
-- [ ] Create Segments management page dalam dashboard
-- [ ] Add segment builder UI dengan filter conditions
-- [ ] Integrate segments dalam broadcast target selection
-- [ ] Add segment stats dan member preview
+- [x] Build segmentService dengan dynamic query builder
+- [x] Create Segments management page dalam dashboard
+- [x] Add segment builder UI dengan filter conditions
+- [x] Integrate segments dalam broadcast target selection
+- [x] Add segment stats dan member preview

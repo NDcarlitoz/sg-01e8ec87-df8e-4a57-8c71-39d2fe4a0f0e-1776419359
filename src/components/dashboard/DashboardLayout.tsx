@@ -51,6 +51,11 @@ const businessToolsNav = [
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
 ];
 
+const automationNav = [
+  { name: "Auto-Reply", href: "/dashboard/auto-reply", icon: Zap },
+  { name: "Segments", href: "/dashboard/segments", icon: Filter },
+];
+
 const accountNav = [
   { name: "Profile", href: "/dashboard/profile", icon: User },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
@@ -103,6 +108,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-1 px-2">
                   {botManagementNav.map(renderMenuItem)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Automation
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1 px-2">
+                  {automationNav.map(renderMenuItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
