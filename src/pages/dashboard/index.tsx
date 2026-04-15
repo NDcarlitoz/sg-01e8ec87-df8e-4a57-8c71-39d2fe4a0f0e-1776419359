@@ -34,8 +34,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Power } from "lucide-react";
+import { Plus, Pencil, Trash2, Bot, Activity, Zap } from "lucide-react";
 import { botTokenService } from "@/services/botTokenService";
+import { profileService } from "@/services/profileService";
 import type { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -48,6 +49,8 @@ export default function BotSettings() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedToken, setSelectedToken] = useState<BotToken | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [userName, setUserName] = useState("User");
+  const [botStats, setBotStats] = useState({ total: 0, active: 0, inactive: 0 });
   
   const [formData, setFormData] = useState({
     bot_name: "",
@@ -59,7 +62,23 @@ export default function BotSettings() {
 
   useEffect(() => {
     loadBotTokens();
+    loadUserProfile();
+    loadBotStats();
   }, []);
+
+  const loadUserProfile = async () => {
+    const { data } = await profileService.getProfile();
+    if (data?.full_name) {
+      setUserName(data.full_name.split(" ")[0] || "User");
+    }
+  };
+
+  const loadBotStats = async () => {
+    const { data } = await botTokenService.getBotStats();
+    if (data) {
+      setBotStats(data);
+    }
+  };
 
   const loadBotTokens = async () => {
     const { data, error } = await botTokenService.getBotTokens();
@@ -119,6 +138,7 @@ export default function BotSettings() {
     setIsAddDialogOpen(false);
     setFormData({ bot_name: "", bot_token: "", bot_username: "" });
     loadBotTokens();
+    loadBotStats();
   };
 
   const handleEditToken = async () => {
@@ -167,6 +187,7 @@ export default function BotSettings() {
     setSelectedToken(null);
     setFormData({ bot_name: "", bot_token: "", bot_username: "" });
     loadBotTokens();
+    loadBotStats();
   };
 
   const handleDeleteToken = async () => {
@@ -193,6 +214,7 @@ export default function BotSettings() {
     setIsDeleteDialogOpen(false);
     setSelectedToken(null);
     loadBotTokens();
+    loadBotStats();
   };
 
   const handleToggleStatus = async (token: BotToken) => {
@@ -213,6 +235,7 @@ export default function BotSettings() {
     });
 
     loadBotTokens();
+    loadBotStats();
   };
 
   const openEditDialog = (token: BotToken) => {
@@ -235,11 +258,79 @@ export default function BotSettings() {
     return token.substring(0, 10) + "..." + token.substring(token.length - 10);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   return (
     <ProtectedRoute>
       <SEO title="Bot Settings - Telegram Admin" />
       <DashboardLayout>
         <div className="space-y-6">
+          {/* Welcome Card */}
+          <Card className="border-0 bg-gradient-to-br from-primary via-primary to-accent shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-3">
+                  <div>
+                    <h2 className="text-2xl font-heading font-bold text-white">
+                      {getGreeting()}, {userName}! 👋
+                    </h2>
+                    <p className="mt-1 text-primary-foreground/80">
+                      Welcome back to your Telegram Bot Dashboard
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-2.5 backdrop-blur-sm">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success">
+                        <Bot className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-primary-foreground/80">Active Bots</p>
+                        <p className="text-2xl font-bold text-white">{botStats.active}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-2.5 backdrop-blur-sm">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                        <Activity className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-primary-foreground/80">Total Bots</p>
+                        <p className="text-2xl font-bold text-white">{botStats.total}</p>
+                      </div>
+                    </div>
+
+                    {botStats.inactive > 0 && (
+                      <div className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-2.5 backdrop-blur-sm">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning/80">
+                          <Zap className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-primary-foreground/80">Inactive</p>
+                          <p className="text-2xl font-bold text-white">{botStats.inactive}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="bg-white text-primary hover:bg-white/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Bot
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bot Tokens Management */}
           <div>
             <h1 className="font-heading text-3xl font-bold text-foreground">Bot Settings</h1>
             <p className="mt-2 text-muted-foreground">
@@ -256,18 +347,20 @@ export default function BotSettings() {
                     Add and manage your Telegram bot tokens from @BotFather
                   </CardDescription>
                 </div>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Bot Token
-                </Button>
               </div>
             </CardHeader>
             <CardContent>
               {botTokens.length === 0 ? (
                 <div className="rounded-lg border-2 border-dashed p-12 text-center">
-                  <p className="text-muted-foreground">
-                    No bot tokens configured yet. Add your first bot token to get started.
+                  <Bot className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                  <h3 className="mt-4 font-semibold">No bot tokens yet</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Get started by adding your first bot token from @BotFather
                   </p>
+                  <Button onClick={() => setIsAddDialogOpen(true)} className="mt-4">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Your First Bot
+                  </Button>
                 </div>
               ) : (
                 <div className="rounded-lg border">

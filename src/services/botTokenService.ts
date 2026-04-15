@@ -15,6 +15,35 @@ export const botTokenService = {
   },
 
   /**
+   * Get bot statistics
+   */
+  async getBotStats(): Promise<{
+    data: {
+      total: number;
+      active: number;
+      inactive: number;
+    } | null;
+    error: string | null;
+  }> {
+    const { data, error } = await supabase
+      .from("bot_tokens")
+      .select("id, is_active");
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    const total = data?.length || 0;
+    const active = data?.filter((bot) => bot.is_active).length || 0;
+    const inactive = total - active;
+
+    return {
+      data: { total, active, inactive },
+      error: null,
+    };
+  },
+
+  /**
    * Create new bot token with Telegram verification
    */
   async createBotToken(tokenData: {
