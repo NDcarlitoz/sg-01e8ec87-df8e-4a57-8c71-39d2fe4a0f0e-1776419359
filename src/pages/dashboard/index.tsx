@@ -67,7 +67,7 @@ export default function BotSettings() {
   }, []);
 
   const loadUserProfile = async () => {
-    const { data } = await profileService.getProfile();
+    const { data } = await profileService.getCurrentProfile();
     if (data?.full_name) {
       setUserName(data.full_name.split(" ")[0] || "User");
     }
