@@ -87,16 +87,39 @@ export const menuService = {
     data: Tables<"bot_menu_items"> | null;
     error: string | null;
   }> {
-    const { data, error } = await supabase
-      .from("bot_menu_items")
-      .insert(input)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("bot_menu_items")
+        .insert({
+          parent_id: input.parent_id || null,
+          title: input.title,
+          description: input.description || null,
+          position: input.position,
+          icon: input.icon || null,
+          button_type: input.button_type,
+          action_type: input.action_type || null,
+          action_value: input.action_value || null,
+          is_active: input.is_active !== undefined ? input.is_active : true,
+          show_in_main_menu: input.show_in_main_menu !== undefined ? input.show_in_main_menu : true,
+          requires_subscription: input.requires_subscription || false,
+          metadata: input.metadata || null,
+        })
+        .select()
+        .single();
 
-    return {
-      data: data || null,
-      error: error?.message || null,
-    };
+      if (error) {
+        console.error("Create menu item error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Create menu item exception:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Failed to create menu item",
+      };
+    }
   },
 
   /**
@@ -106,15 +129,38 @@ export const menuService = {
     id: string,
     updates: Partial<MenuItemInput>
   ): Promise<{ error: string | null }> {
-    const { error } = await supabase
-      .from("bot_menu_items")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("bot_menu_items")
+        .update({
+          parent_id: updates.parent_id !== undefined ? updates.parent_id || null : undefined,
+          title: updates.title,
+          description: updates.description !== undefined ? updates.description || null : undefined,
+          position: updates.position,
+          icon: updates.icon !== undefined ? updates.icon || null : undefined,
+          button_type: updates.button_type,
+          action_type: updates.action_type !== undefined ? updates.action_type || null : undefined,
+          action_value: updates.action_value !== undefined ? updates.action_value || null : undefined,
+          is_active: updates.is_active,
+          show_in_main_menu: updates.show_in_main_menu,
+          requires_subscription: updates.requires_subscription,
+          metadata: updates.metadata !== undefined ? updates.metadata || null : undefined,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
 
-    return { error: error?.message || null };
+      if (error) {
+        console.error("Update menu item error:", error);
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error("Update menu item exception:", error);
+      return {
+        error: error instanceof Error ? error.message : "Failed to update menu item",
+      };
+    }
   },
 
   /**
@@ -194,16 +240,37 @@ export const menuService = {
     data: Tables<"bot_pages"> | null;
     error: string | null;
   }> {
-    const { data, error } = await supabase
-      .from("bot_pages")
-      .insert(input)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("bot_pages")
+        .insert({
+          title: input.title,
+          content: input.content,
+          page_type: input.page_type || "text",
+          image_url: input.image_url || null,
+          video_url: input.video_url || null,
+          file_url: input.file_url || null,
+          buttons: input.buttons || null,
+          is_active: input.is_active !== undefined ? input.is_active : true,
+          show_back_button: input.show_back_button !== undefined ? input.show_back_button : true,
+          metadata: input.metadata || null,
+        })
+        .select()
+        .single();
 
-    return {
-      data: data || null,
-      error: error?.message || null,
-    };
+      if (error) {
+        console.error("Create page error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Create page exception:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Failed to create page",
+      };
+    }
   },
 
   /**
@@ -213,15 +280,36 @@ export const menuService = {
     id: string,
     updates: Partial<PageInput>
   ): Promise<{ error: string | null }> {
-    const { error } = await supabase
-      .from("bot_pages")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("bot_pages")
+        .update({
+          title: updates.title,
+          content: updates.content,
+          page_type: updates.page_type,
+          image_url: updates.image_url !== undefined ? updates.image_url || null : undefined,
+          video_url: updates.video_url !== undefined ? updates.video_url || null : undefined,
+          file_url: updates.file_url !== undefined ? updates.file_url || null : undefined,
+          buttons: updates.buttons !== undefined ? updates.buttons || null : undefined,
+          is_active: updates.is_active,
+          show_back_button: updates.show_back_button,
+          metadata: updates.metadata !== undefined ? updates.metadata || null : undefined,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
 
-    return { error: error?.message || null };
+      if (error) {
+        console.error("Update page error:", error);
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error("Update page exception:", error);
+      return {
+        error: error instanceof Error ? error.message : "Failed to update page",
+      };
+    }
   },
 
   /**
