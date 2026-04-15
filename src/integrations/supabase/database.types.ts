@@ -15,6 +15,259 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_commissions: {
+        Row: {
+          affiliate_id: string | null
+          amount: number
+          approved_at: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          paid_at: string | null
+          referral_id: string | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          amount: number
+          approved_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          referral_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          amount?: number
+          approved_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          referral_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_payouts: {
+        Row: {
+          admin_note: string | null
+          affiliate_id: string | null
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          payment_details: Json | null
+          payment_method: string
+          requested_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          affiliate_id?: string | null
+          amount: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          payment_details?: Json | null
+          payment_method: string
+          requested_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          affiliate_id?: string | null
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string
+          requested_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_payouts_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_programs: {
+        Row: {
+          commission_type: string
+          commission_value: number
+          cookie_duration_days: number | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          min_payout_amount: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          commission_type: string
+          commission_value: number
+          cookie_duration_days?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_payout_amount?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          commission_type?: string
+          commission_value?: number
+          cookie_duration_days?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_payout_amount?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_referrals: {
+        Row: {
+          affiliate_id: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referred_user_id: number
+          referred_username: string | null
+          source: string | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referred_user_id: number
+          referred_username?: string | null
+          source?: string | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_user_id?: number
+          referred_username?: string | null
+          source?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_referrals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          lifetime_payouts: number | null
+          pending_payout: number | null
+          program_id: string | null
+          referral_code: string
+          total_earnings: number | null
+          total_referrals: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          lifetime_payouts?: number | null
+          pending_payout?: number | null
+          program_id?: string | null
+          referral_code: string
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          lifetime_payouts?: number | null
+          pending_payout?: number | null
+          program_id?: string | null
+          referral_code?: string
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliates_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_reply_rules: {
         Row: {
           created_at: string | null
@@ -594,6 +847,199 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_notes: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_pinned: boolean | null
+          lead_id: string | null
+          note_type: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          lead_id?: string | null
+          note_type?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          lead_id?: string | null
+          note_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_sources: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      lead_stages: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          position: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: number
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          company: string | null
+          converted_at: string | null
+          created_at: string | null
+          currency: string | null
+          custom_fields: Json | null
+          email: string | null
+          estimated_value: number | null
+          full_name: string | null
+          id: string
+          last_contact_at: string | null
+          next_followup_at: string | null
+          phone: string | null
+          priority: string | null
+          source_id: string | null
+          stage_id: string | null
+          status: string | null
+          tags: string[] | null
+          telegram_user_id: number | null
+          telegram_username: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          company?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          custom_fields?: Json | null
+          email?: string | null
+          estimated_value?: number | null
+          full_name?: string | null
+          id?: string
+          last_contact_at?: string | null
+          next_followup_at?: string | null
+          phone?: string | null
+          priority?: string | null
+          source_id?: string | null
+          stage_id?: string | null
+          status?: string | null
+          tags?: string[] | null
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          company?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          custom_fields?: Json | null
+          email?: string | null
+          estimated_value?: number | null
+          full_name?: string | null
+          id?: string
+          last_contact_at?: string | null
+          next_followup_at?: string | null
+          phone?: string | null
+          priority?: string | null
+          source_id?: string | null
+          stage_id?: string | null
+          status?: string | null
+          tags?: string[] | null
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "lead_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "lead_stages"
             referencedColumns: ["id"]
           },
         ]
