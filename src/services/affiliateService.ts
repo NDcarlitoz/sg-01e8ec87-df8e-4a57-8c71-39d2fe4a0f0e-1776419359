@@ -96,12 +96,22 @@ export const affiliateService = {
     });
 
     if (!error) {
-      // Update affiliate stats
-      await supabase.rpc("increment", {
-        table_name: "affiliates",
-        row_id: data.affiliate_id,
-        column_name: "total_referrals",
-      });
+      // Update affiliate stats safely
+      const { data: affiliate } = await supabase
+        .from("affiliates")
+        .select("total_referrals")
+        .eq("id", data.affiliate_id)
+        .single();
+
+      if (affiliate) {
+        await supabase
+          .from("affiliates")
+          .update({
+            total_referrals: (affiliate.total_referrals || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", data.affiliate_id);
+      }
     }
 
     return { error: error?.message || null };
