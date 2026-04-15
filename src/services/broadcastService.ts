@@ -73,6 +73,7 @@ export const broadcastService = {
     caption?: string;
     scheduled_at?: string;
     buttons?: TelegramButton[][];
+    pin_message?: boolean;
   }): Promise<{ data: Tables<"broadcasts"> | null; error: string | null }> {
     const { data: authData } = await supabase.auth.getSession();
     const userId = authData.session?.user.id;
@@ -95,6 +96,7 @@ export const broadcastService = {
         caption: broadcastData.caption,
         scheduled_at: broadcastData.scheduled_at,
         buttons: broadcastData.buttons as any,
+        pin_message: broadcastData.pin_message || false,
         status: "draft",
       })
       .select()
@@ -136,6 +138,7 @@ export const broadcastService = {
 
       let sentCount = 0;
       let failedCount = 0;
+      const pinStatus: Array<{ target_id: string; pinned: boolean; error?: string }> = [];
 
       const buttons = (broadcast.buttons as unknown) as TelegramButton[][] | null;
 
@@ -172,8 +175,35 @@ export const broadcastService = {
         if (result.error) {
           failedCount++;
           console.error(`Failed to send to ${targetId}:`, result.error);
+          pinStatus.push({ target_id: targetId, pinned: false, error: result.error });
         } else {
           sentCount++;
+          
+          // Pin message if enabled
+          if (broadcast.pin_message && result.data?.message_id) {
+            const pinResult = await telegramService.pinChatMessage(
+              token,
+              targetId,
+              result.data.message_id,
+              true // disable notification
+            );
+            
+            pinStatus.push({
+              target_id: targetId,
+              pinned: pinResult.success,
+              error: pinResult.error || undefined,
+            });
+            
+            if (pinResult.error) {
+              console.error(`Failed to pin message in ${targetId}:`, pinResult.error);
+            }
+          } else if (broadcast.pin_message) {
+            pinStatus.push({
+              target_id: targetId,
+              pinned: false,
+              error: "No message_id returned",
+            });
+          }
         }
       }
 
@@ -184,6 +214,7 @@ export const broadcastService = {
           status: failedCount === broadcast.target_ids.length ? "failed" : "sent",
           sent_count: sentCount,
           failed_count: failedCount,
+          pin_status: broadcast.pin_message ? pinStatus : null,
         })
         .eq("id", broadcastId);
 

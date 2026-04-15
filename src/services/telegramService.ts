@@ -368,6 +368,90 @@ export const telegramService = {
   },
 
   /**
+   * Pin message in chat
+   */
+  async pinChatMessage(
+    botToken: string,
+    chatId: string | number,
+    messageId: number,
+    disableNotification: boolean = false
+  ): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const response = await fetch(
+        `${TELEGRAM_API_BASE}${botToken}/pinChatMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            disable_notification: disableNotification,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        return {
+          success: false,
+          error: data.description || "Failed to pin message",
+        };
+      }
+
+      return { success: true, error: null };
+    } catch (error) {
+      console.error("Pin message error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
+   * Unpin message in chat
+   */
+  async unpinChatMessage(
+    botToken: string,
+    chatId: string | number,
+    messageId?: number
+  ): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const payload: any = { chat_id: chatId };
+      if (messageId) {
+        payload.message_id = messageId;
+      }
+
+      const response = await fetch(
+        `${TELEGRAM_API_BASE}${botToken}/unpinChatMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        return {
+          success: false,
+          error: data.description || "Failed to unpin message",
+        };
+      }
+
+      return { success: true, error: null };
+    } catch (error) {
+      console.error("Unpin message error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
    * Get active bot token from database
    */
   async getActiveBotToken(): Promise<{ token: string | null; error: string | null }> {

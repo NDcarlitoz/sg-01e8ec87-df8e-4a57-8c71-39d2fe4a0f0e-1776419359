@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -190,6 +190,8 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           message: string
+          pin_message: boolean | null
+          pin_status: Json | null
           scheduled_at: string | null
           sent_at: string | null
           sent_count: number | null
@@ -211,6 +213,8 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message: string
+          pin_message?: boolean | null
+          pin_status?: Json | null
           scheduled_at?: string | null
           sent_at?: string | null
           sent_count?: number | null
@@ -232,6 +236,8 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message?: string
+          pin_message?: boolean | null
+          pin_status?: Json | null
           scheduled_at?: string | null
           sent_at?: string | null
           sent_count?: number | null
