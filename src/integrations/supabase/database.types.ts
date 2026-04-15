@@ -914,6 +914,54 @@ export type Database = {
           },
         ]
       }
+      lead_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          title: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          title: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_notes: {
         Row: {
           content: string
@@ -961,25 +1009,34 @@ export type Database = {
       }
       lead_sources: {
         Row: {
+          conversion_rate: number | null
+          converted_leads: number | null
           created_at: string | null
           description: string | null
           id: string
           is_active: boolean | null
           name: string
+          total_leads: number | null
         }
         Insert: {
+          conversion_rate?: number | null
+          converted_leads?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
           name: string
+          total_leads?: number | null
         }
         Update: {
+          conversion_rate?: number | null
+          converted_leads?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
+          total_leads?: number | null
         }
         Relationships: []
       }
@@ -1013,6 +1070,73 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          lead_id: string
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
@@ -1026,6 +1150,9 @@ export type Database = {
           full_name: string | null
           id: string
           last_contact_at: string | null
+          lead_score: number | null
+          metadata: Json | null
+          next_follow_up_at: string | null
           next_followup_at: string | null
           phone: string | null
           priority: string | null
@@ -1036,6 +1163,9 @@ export type Database = {
           telegram_user_id: number | null
           telegram_username: string | null
           updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -1049,6 +1179,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           last_contact_at?: string | null
+          lead_score?: number | null
+          metadata?: Json | null
+          next_follow_up_at?: string | null
           next_followup_at?: string | null
           phone?: string | null
           priority?: string | null
@@ -1059,6 +1192,9 @@ export type Database = {
           telegram_user_id?: number | null
           telegram_username?: string | null
           updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -1072,6 +1208,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           last_contact_at?: string | null
+          lead_score?: number | null
+          metadata?: Json | null
+          next_follow_up_at?: string | null
           next_followup_at?: string | null
           phone?: string | null
           priority?: string | null
@@ -1082,6 +1221,9 @@ export type Database = {
           telegram_user_id?: number | null
           telegram_username?: string | null
           updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
