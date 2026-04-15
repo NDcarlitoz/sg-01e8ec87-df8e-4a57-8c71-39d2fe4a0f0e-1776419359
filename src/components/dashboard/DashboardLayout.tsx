@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import {
   Sidebar,
@@ -31,6 +31,7 @@ import {
   Shield,
 } from "lucide-react";
 import { authService } from "@/services/authService";
+import { affiliateService } from "@/services/affiliateService";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -43,13 +44,6 @@ const botManagementNav = [
   { name: "Groups", href: "/dashboard/groups", icon: Users },
   { name: "Channels", href: "/dashboard/channels", icon: Hash },
   { name: "Broadcast", href: "/dashboard/broadcast", icon: Send },
-];
-
-const businessToolsNav = [
-  { name: "Users", href: "/dashboard/users", icon: UserCog },
-  { name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign },
-  { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
 ];
 
 const automationNav = [
@@ -65,11 +59,30 @@ const accountNav = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
+  const [affiliateEnabled, setAffiliateEnabled] = useState(false);
+
+  useEffect(() => {
+    checkAffiliateStatus();
+  }, []);
+
+  const checkAffiliateStatus = async () => {
+    const enabled = await affiliateService.isEnabled();
+    setAffiliateEnabled(enabled);
+  };
 
   const handleLogout = async () => {
     await authService.signOut();
     router.push("/login");
   };
+
+  // Build business tools nav dynamically
+  const businessToolsNav = [
+    { name: "Users", href: "/dashboard/users", icon: UserCog },
+    ...(affiliateEnabled ? [{ name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign }] : []),
+    { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
+    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+    { name: "Affiliate Settings", href: "/dashboard/affiliate-settings", icon: Settings },
+  ];
 
   const renderMenuItem = (item: { name: string; href: string; icon: any }) => {
     const isActive = router.pathname === item.href;

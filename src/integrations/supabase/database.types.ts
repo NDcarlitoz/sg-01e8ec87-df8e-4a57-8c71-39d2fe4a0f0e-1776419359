@@ -208,6 +208,42 @@ export type Database = {
           },
         ]
       }
+      affiliate_system_settings: {
+        Row: {
+          auto_approve_payouts: boolean | null
+          auto_approve_referrals: boolean | null
+          created_at: string | null
+          default_currency: string | null
+          enabled: boolean | null
+          id: string
+          minimum_payout_amount: number | null
+          terms_and_conditions: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_approve_payouts?: boolean | null
+          auto_approve_referrals?: boolean | null
+          created_at?: string | null
+          default_currency?: string | null
+          enabled?: boolean | null
+          id?: string
+          minimum_payout_amount?: number | null
+          terms_and_conditions?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_approve_payouts?: boolean | null
+          auto_approve_referrals?: boolean | null
+          created_at?: string | null
+          default_currency?: string | null
+          enabled?: boolean | null
+          id?: string
+          minimum_payout_amount?: number | null
+          terms_and_conditions?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       affiliates: {
         Row: {
           created_at: string | null

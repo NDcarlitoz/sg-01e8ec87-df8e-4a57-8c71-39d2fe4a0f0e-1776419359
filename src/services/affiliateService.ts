@@ -39,6 +39,56 @@ export type CurrencyCode = keyof typeof CURRENCIES;
 
 export const affiliateService = {
   /**
+   * Get affiliate system settings
+   */
+  async getSystemSettings(): Promise<{
+    data: Tables<"affiliate_system_settings"> | null;
+    error: string | null;
+  }> {
+    const { data, error } = await supabase
+      .from("affiliate_system_settings")
+      .select("*")
+      .limit(1)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      return { data: null, error: error.message };
+    }
+
+    return { data: data || null, error: null };
+  },
+
+  /**
+   * Update affiliate system settings
+   */
+  async updateSystemSettings(settings: {
+    enabled?: boolean;
+    auto_approve_referrals?: boolean;
+    auto_approve_payouts?: boolean;
+    minimum_payout_amount?: number;
+    default_currency?: string;
+    terms_and_conditions?: string;
+  }): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("affiliate_system_settings")
+      .update({
+        ...settings,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", (await this.getSystemSettings()).data?.id || "");
+
+    return { error: error?.message || null };
+  },
+
+  /**
+   * Check if affiliate system is enabled
+   */
+  async isEnabled(): Promise<boolean> {
+    const { data } = await this.getSystemSettings();
+    return data?.enabled || false;
+  },
+
+  /**
    * Format amount with currency
    */
   formatCurrency(amount: number, currency: string = "USD"): string {
@@ -116,6 +166,70 @@ export const affiliateService = {
       data: data || [],
       error: error?.message || null,
     };
+  },
+
+  /**
+   * Create affiliate program
+   */
+  async createProgram(program: {
+    name: string;
+    description?: string;
+    commission_type: "percentage" | "fixed";
+    commission_value: number;
+    currency?: string;
+    is_active?: boolean;
+  }): Promise<{ data: Tables<"affiliate_programs"> | null; error: string | null }> {
+    const { data, error } = await supabase
+      .from("affiliate_programs")
+      .insert({
+        name: program.name,
+        description: program.description,
+        commission_type: program.commission_type,
+        commission_value: program.commission_value,
+        currency: program.currency || "USD",
+        is_active: program.is_active !== false,
+      })
+      .select()
+      .single();
+
+    return {
+      data: data || null,
+      error: error?.message || null,
+    };
+  },
+
+  /**
+   * Update affiliate program
+   */
+  async updateProgram(
+    programId: string,
+    updates: {
+      name?: string;
+      description?: string;
+      commission_type?: "percentage" | "fixed";
+      commission_value?: number;
+      currency?: string;
+      is_active?: boolean;
+    }
+  ): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("affiliate_programs")
+      .update(updates)
+      .eq("id", programId);
+
+    return { error: error?.message || null };
+  },
+
+  /**
+   * Delete affiliate program
+   */
+  async deleteProgram(programId: string): Promise<{ error: string | null }> {
+    const { error } = await supabase
+      .from("affiliate_programs")
+      .delete()
+      .eq("id", programId);
+
+    return { error: error?.message || null };
   },
 
   /**
