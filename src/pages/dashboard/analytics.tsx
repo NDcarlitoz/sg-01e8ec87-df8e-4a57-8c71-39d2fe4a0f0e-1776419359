@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
     const [usersRes, groupsRes, channelsRes, broadcastsRes, leadsRes] = await Promise.all([
       supabase.from("bot_users").select("*", { count: "exact", head: true }),
       supabase.from("bot_groups").select("*", { count: "exact", head: true }),
-      supabase.from("bot_channels").select("*", { count: "exact", head: true }),
+      supabase.from("channels").select("*", { count: "exact", head: true }),
       supabase.from("broadcasts").select("*", { count: "exact", head: true }),
       supabase.from("leads").select("*", { count: "exact", head: true }),
     ]);
