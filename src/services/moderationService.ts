@@ -423,7 +423,7 @@ export const moderationService = {
     // Get channel chat IDs
     const { data: channels } = await supabase
       .from("channels")
-      .select("chat_id")
+      .select("channel_id")
       .in("id", channelIds);
 
     if (!channels || channels.length === 0) {
@@ -439,7 +439,7 @@ export const moderationService = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              chat_id: channel.chat_id,
+              chat_id: channel.channel_id,
               user_id: userId,
             }),
           }
