@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -297,6 +297,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_forwards: {
+        Row: {
+          created_at: string | null
+          failed_count: number | null
+          forward_results: Json | null
+          forwarded_count: number | null
+          id: string
+          scheduled_at: string | null
+          source_chat_id: string
+          source_message_id: number
+          status: string
+          target_ids: string[]
+          target_type: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          failed_count?: number | null
+          forward_results?: Json | null
+          forwarded_count?: number | null
+          id?: string
+          scheduled_at?: string | null
+          source_chat_id: string
+          source_message_id: number
+          status?: string
+          target_ids?: string[]
+          target_type: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          failed_count?: number | null
+          forward_results?: Json | null
+          forwarded_count?: number | null
+          id?: string
+          scheduled_at?: string | null
+          source_chat_id?: string
+          source_message_id?: number
+          status?: string
+          target_ids?: string[]
+          target_type?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

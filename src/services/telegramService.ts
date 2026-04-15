@@ -212,6 +212,48 @@ export const telegramService = {
   },
 
   /**
+   * Forward message to another chat
+   */
+  async forwardMessage(
+    botToken: string,
+    chatId: string | number,
+    fromChatId: string | number,
+    messageId: number
+  ): Promise<{ data: any; error: string | null }> {
+    try {
+      const response = await fetch(
+        `${TELEGRAM_API_BASE}${botToken}/forwardMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            from_chat_id: fromChatId,
+            message_id: messageId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        return {
+          data: null,
+          error: data.description || "Failed to forward message",
+        };
+      }
+
+      return { data: data.result, error: null };
+    } catch (error) {
+      console.error("Forward message error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
    * Get chat info
    */
   async getChat(
