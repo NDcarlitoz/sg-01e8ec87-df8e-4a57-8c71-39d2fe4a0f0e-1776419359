@@ -87,7 +87,7 @@ export default function BroadcastPage() {
     if (error) {
       toast({
         title: "Error",
-        description: error,
+        description: typeof error === 'string' ? error : error.message || "Failed to load channels",
         variant: "destructive",
       });
     } else if (data) {
