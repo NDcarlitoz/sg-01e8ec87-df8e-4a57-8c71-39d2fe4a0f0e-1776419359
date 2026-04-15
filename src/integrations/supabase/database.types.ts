@@ -615,42 +615,69 @@ export type Database = {
         Row: {
           created_at: string | null
           first_name: string | null
+          full_name: string | null
           id: string
           is_active: boolean | null
+          is_blocked: boolean | null
           is_bot: boolean | null
+          is_premium: boolean | null
           language_code: string | null
           last_interaction: string | null
           last_name: string | null
+          last_seen: string | null
+          metadata: Json | null
+          notes: string | null
           owner_id: string
+          phone_number: string | null
           tags: string[] | null
+          total_messages: number | null
+          updated_at: string | null
           user_id: number
           username: string | null
         }
         Insert: {
           created_at?: string | null
           first_name?: string | null
+          full_name?: string | null
           id?: string
           is_active?: boolean | null
+          is_blocked?: boolean | null
           is_bot?: boolean | null
+          is_premium?: boolean | null
           language_code?: string | null
           last_interaction?: string | null
           last_name?: string | null
+          last_seen?: string | null
+          metadata?: Json | null
+          notes?: string | null
           owner_id: string
+          phone_number?: string | null
           tags?: string[] | null
+          total_messages?: number | null
+          updated_at?: string | null
           user_id: number
           username?: string | null
         }
         Update: {
           created_at?: string | null
           first_name?: string | null
+          full_name?: string | null
           id?: string
           is_active?: boolean | null
+          is_blocked?: boolean | null
           is_bot?: boolean | null
+          is_premium?: boolean | null
           language_code?: string | null
           last_interaction?: string | null
           last_name?: string | null
+          last_seen?: string | null
+          metadata?: Json | null
+          notes?: string | null
           owner_id?: string
+          phone_number?: string | null
           tags?: string[] | null
+          total_messages?: number | null
+          updated_at?: string | null
           user_id?: number
           username?: string | null
         }
@@ -1480,6 +1507,41 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_interactions: {
+        Row: {
+          bot_user_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          interaction_type: string
+          metadata: Json | null
+        }
+        Insert: {
+          bot_user_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          metadata?: Json | null
+        }
+        Update: {
+          bot_user_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interactions_bot_user_id_fkey"
+            columns: ["bot_user_id"]
+            isOneToOne: false
+            referencedRelation: "bot_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_invite_tracking: {
         Row: {
