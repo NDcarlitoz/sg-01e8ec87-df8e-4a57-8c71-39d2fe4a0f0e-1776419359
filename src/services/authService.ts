@@ -107,6 +107,10 @@ export const authService = {
     }
   },
 
+  async requestPasswordReset(email: string): Promise<{ error: string | null }> {
+    return this.resetPassword(email);
+  },
+
   async updatePassword(newPassword: string): Promise<{ error: string | null }> {
     try {
       const { error } = await supabase.auth.updateUser({

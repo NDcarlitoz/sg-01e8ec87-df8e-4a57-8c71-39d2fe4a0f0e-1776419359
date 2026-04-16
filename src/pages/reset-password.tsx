@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const checkSession = async (): Promise<void> => {
-      const { user } = await authService.getCurrentUser();
+      const { data: user } = await authService.getCurrentUser();
       setHasSession(!!user);
     };
 
