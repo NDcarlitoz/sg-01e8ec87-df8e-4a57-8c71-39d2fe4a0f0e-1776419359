@@ -1,17 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
-
-// Use service role for backend operations that bypass RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+import { supabase } from "@/integrations/supabase/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -27,14 +15,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Bot ID required" });
     }
 
-    // Use admin client to bypass RLS
-    const { data: bot, error: dbError } = await supabaseAdmin
+    // Get bot token from database (now allowed by RLS policy)
+    const { data: bot, error: dbError } = await supabase
       .from("bot_tokens")
       .select("bot_token, id, bot_name, bot_username")
       .eq("id", botId)
-      .single();
+      .maybeSingle();
 
-    console.log("Database query result:", { found: !!bot, error: dbError?.message });
+    console.log("Database query result:", { bot, dbError });
 
     if (dbError) {
       console.error("Database error:", dbError);
@@ -51,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Construct webhook URL
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://mmautobot.it.com"}/api/telegram/webhook?token=${bot.bot_token}`;
 
-    console.log("Setting webhook URL:", webhookUrl.replace(bot.bot_token, "***"));
+    console.log("Setting webhook URL:", webhookUrl);
 
     // Set webhook with Telegram
     const telegramUrl = `https://api.telegram.org/bot${bot.bot_token}/setWebhook`;
@@ -75,25 +63,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Update bot status in database using admin client
-    const { error: updateError } = await supabaseAdmin
-      .from("bot_tokens")
-      .update({ 
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", botId);
-
-    if (updateError) {
-      console.error("Failed to update bot status:", updateError);
-      // Don't fail the request, webhook is set even if DB update fails
-    }
-
     console.log("Webhook setup complete!");
 
     return res.status(200).json({ 
       success: true, 
-      webhookUrl: webhookUrl.replace(bot.bot_token, "***"),
+      webhookUrl,
       message: "Webhook set successfully" 
     });
   } catch (error) {
