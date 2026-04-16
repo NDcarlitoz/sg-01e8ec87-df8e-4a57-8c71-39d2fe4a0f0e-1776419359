@@ -216,30 +216,57 @@ export default function BotSettings() {
   const handleSetupWebhook = async (botId: string) => {
     setIsLoading(true);
     
-    const response = await fetch("/api/telegram/set-webhook", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ botId }),
-    });
+    console.log('Setting up webhook for bot:', botId);
+    
+    try {
+      const response = await fetch("/api/telegram/set-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botId }),
+      });
 
-    const data = await response.json();
-    setIsLoading(false);
+      console.log('Webhook setup response status:', response.status);
 
-    if (!response.ok) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Webhook setup error response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: errorText };
+        }
+
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: errorData.error || `HTTP ${response.status}: ${errorText}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Webhook setup success:', data);
+      
+      setIsLoading(false);
+
+      toast({
+        title: "Success",
+        description: "Bot webhook configured successfully! Your bot is now live.",
+      });
+
+      loadBotTokens();
+    } catch (error) {
+      console.error('Webhook setup exception:', error);
+      setIsLoading(false);
       toast({
         title: "Error",
-        description: data.error || "Failed to setup webhook",
+        description: error instanceof Error ? error.message : "Failed to setup webhook. Check console for details.",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Bot webhook configured successfully! Your bot is now live.",
-    });
-
-    loadBotTokens();
   };
 
   const handleDeleteToken = async (id: string) => {
