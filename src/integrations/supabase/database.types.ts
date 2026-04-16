@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -580,6 +580,7 @@ export type Database = {
           is_active: boolean | null
           updated_at: string | null
           user_id: string
+          welcome_message: string | null
         }
         Insert: {
           bot_name: string
@@ -590,6 +591,7 @@ export type Database = {
           is_active?: boolean | null
           updated_at?: string | null
           user_id: string
+          welcome_message?: string | null
         }
         Update: {
           bot_name?: string
@@ -600,6 +602,7 @@ export type Database = {
           is_active?: boolean | null
           updated_at?: string | null
           user_id?: string
+          welcome_message?: string | null
         }
         Relationships: [
           {

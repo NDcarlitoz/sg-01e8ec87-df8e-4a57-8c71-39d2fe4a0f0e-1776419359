@@ -232,4 +232,60 @@ export const botTokenService = {
     const tokenRegex = /^\d+:[A-Za-z0-9_-]+$/;
     return tokenRegex.test(token);
   },
+
+  /**
+   * Update bot welcome message
+   */
+  async updateWelcomeMessage(
+    botId: string,
+    welcomeMessage: string
+  ): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const { error } = await supabase
+        .from("bot_tokens")
+        .update({ welcome_message: welcomeMessage })
+        .eq("id", botId);
+
+      if (error) {
+        console.error("Update welcome message error:", error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, error: null };
+    } catch (error) {
+      console.error("Update welcome message error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
+   * Get bot welcome message
+   */
+  async getWelcomeMessage(
+    botId: string
+  ): Promise<{ data: string | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from("bot_tokens")
+        .select("welcome_message")
+        .eq("id", botId)
+        .single();
+
+      if (error) {
+        console.error("Get welcome message error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data: data?.welcome_message || null, error: null };
+    } catch (error) {
+      console.error("Get welcome message error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
 };
