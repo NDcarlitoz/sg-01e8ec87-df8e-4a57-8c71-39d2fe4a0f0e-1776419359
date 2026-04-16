@@ -30,6 +30,8 @@ import {
   Filter,
   Shield,
   Radio,
+  LayoutDashboard,
+  FileText,
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { affiliateService } from "@/services/affiliateService";
@@ -121,7 +123,47 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
 
-          <SidebarContent className="bg-muted/50">
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={router.pathname === "/dashboard"}>
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/users"}>
+                    <Link href="/dashboard/users">
+                      <Users className="h-4 w-4" />
+                      <span>Users</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/logs"}>
+                    <Link href="/dashboard/logs">
+                      <FileText className="h-4 w-4" />
+                      <span>Logs</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/channels"}>
+                    <Link href="/dashboard/channels">
+                      <Radio className="h-4 w-4" />
+                      <span>Channels</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Bot Management
