@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/integrations/supabase/client";
+import { moderationService } from "@/services/moderationService";
 
 interface TelegramMessage {
   message_id: number;
@@ -13,9 +14,10 @@ interface TelegramMessage {
   };
   chat: {
     id: number;
-    first_name: string;
+    first_name?: string;
     last_name?: string;
     username?: string;
+    title?: string;
     type: string;
   };
   date: number;
@@ -29,7 +31,7 @@ interface TelegramUpdate {
 
 async function sendMessage(botToken: string, chatId: number, text: string) {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -88,7 +90,6 @@ Reply with your choice!`;
 
 async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
   try {
-    // 1. Get bot owner's user_id from bot_tokens table
     const { data: botData } = await supabase
       .from("bot_tokens")
       .select("user_id")
@@ -102,7 +103,6 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
       return;
     }
 
-    // 2. Check if user exists
     const { data: existingUser } = await supabase
       .from("bot_users")
       .select("id")
@@ -113,7 +113,6 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
     let botUserId = existingUser?.id;
 
     if (existingUser) {
-      // Update last interaction
       await supabase
         .from("bot_users")
         .update({
@@ -122,7 +121,6 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
         })
         .eq("id", existingUser.id);
     } else {
-      // Create new user
       const { data: newUser, error: insertError } = await supabase
         .from("bot_users")
         .insert({
@@ -140,7 +138,7 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
         })
         .select("id")
         .single();
-        
+
       if (insertError) {
         console.error("Insert user error:", insertError);
       }
@@ -148,28 +146,133 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
     }
 
     if (botUserId) {
-      // Log interaction
-      await supabase
-        .from("user_interactions")
-        .insert({
-          bot_user_id: botUserId,
-          interaction_type: "message",
-          content: message.text || "",
-          metadata: {
-            message_id: message.message_id,
-            chat_id: message.chat.id,
-            date: message.date,
-          },
-        });
+      await supabase.from("user_interactions").insert({
+        bot_user_id: botUserId,
+        interaction_type: "message",
+        content: message.text || "",
+        metadata: {
+          message_id: message.message_id,
+          chat_id: message.chat.id,
+          date: message.date,
+        },
+      });
     }
   } catch (error) {
     console.error("Save user error:", error);
   }
 }
 
+async function handleModeration(message: TelegramMessage): Promise<boolean> {
+  if (!message.text) {
+    return false;
+  }
+
+  if (message.chat.type !== "group" && message.chat.type !== "supergroup") {
+    return false;
+  }
+
+  if (!message.from || message.from.is_bot) {
+    return false;
+  }
+
+  try {
+    const { data: group, error: groupError }: any = await supabase
+      .from("bot_groups")
+      .select("id, chat_id, title")
+      .eq("chat_id", message.chat.id)
+      .single();
+
+    if (groupError || !group) {
+      if (groupError && groupError.code !== "PGRST116") {
+        console.error("Group lookup error:", groupError);
+      }
+      return false;
+    }
+
+    const groupId = group.id as string;
+
+    const { data: settings } = await moderationService.getModerationSettings(groupId);
+    const autoDelete = settings?.auto_delete_enabled ?? false;
+    const autoKick = settings?.auto_kick_enabled ?? false;
+    const autoBan = settings?.auto_ban_enabled ?? false;
+    const kickAfter = settings?.kick_after_violations ?? 3;
+    const banAfter = settings?.ban_after_violations ?? 5;
+
+    const { hasBannedWord, matchedWord } = await moderationService.checkBannedWords(
+      groupId,
+      message.text
+    );
+
+    if (!hasBannedWord || !matchedWord) {
+      return false;
+    }
+
+    const { violationCount } = await moderationService.recordViolation(
+      groupId,
+      message.from.id
+    );
+
+    let performedAction = "warning";
+
+    if (
+      autoDelete ||
+      matchedWord.action === "delete" ||
+      matchedWord.action === "kick" ||
+      matchedWord.action === "ban"
+    ) {
+      const deleteResult = await moderationService.executeAction(
+        "delete",
+        message.chat.id,
+        message.from.id,
+        message.message_id
+      );
+      if (deleteResult.success) {
+        performedAction = "delete_message";
+      }
+    }
+
+    if (autoBan && violationCount >= banAfter) {
+      const banResult = await moderationService.executeAction(
+        "ban",
+        message.chat.id,
+        message.from.id
+      );
+      if (banResult.success) {
+        performedAction = "ban";
+      }
+    } else if (autoKick && violationCount >= kickAfter) {
+      const kickResult = await moderationService.executeAction(
+        "kick",
+        message.chat.id,
+        message.from.id
+      );
+      if (kickResult.success) {
+        performedAction = "kick";
+      }
+    }
+
+    await moderationService.logAction(
+      groupId,
+      message.from.id,
+      performedAction,
+      `Banned word "${matchedWord.word}" detected. Violation #${violationCount}.`,
+      {
+        username: message.from.username,
+        triggeredBy: "auto_moderation",
+        messageText: message.text,
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Moderation handling error:", error);
+    return false;
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("Webhook endpoint called:", req.method, req.url);
-  
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -184,18 +287,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const message = update.message;
     const text = message.text.toLowerCase().trim();
 
-    // Get bot token from query or header
-    const botToken = req.query.token as string || req.headers["x-telegram-bot-token"] as string;
+    const botToken =
+      (req.query.token as string) || (req.headers["x-telegram-bot-token"] as string);
 
     if (!botToken) {
       console.error("No bot token provided");
       return res.status(400).json({ error: "Bot token required" });
     }
 
-    // Save user to database
     await saveUserToDatabase(message, botToken);
 
-    // Handle commands
+    const wasModerated = await handleModeration(message);
+    if (wasModerated) {
+      return res.status(200).json({ ok: true });
+    }
+
     if (text === "/start") {
       await handleStart(botToken, message);
     } else if (text === "/help") {
@@ -203,22 +309,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else if (text === "/menu") {
       await handleMenu(botToken, message);
     } else {
-      // Echo back for unknown commands
       const echoText = `You said: ${message.text}
 
 Try these commands:
 /start - Get started
 /help - Get help
 /menu - Show menu`;
-      
+
       await sendMessage(botToken, message.chat.id, echoText);
     }
 
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error("Webhook error:", error);
-    return res.status(500).json({ 
-      error: error instanceof Error ? error.message : "Internal server error" 
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : "Internal server error",
     });
   }
 }

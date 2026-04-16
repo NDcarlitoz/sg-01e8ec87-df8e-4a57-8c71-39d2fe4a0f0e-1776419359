@@ -1,6 +1,6 @@
 ---
 title: Enhance bot security moderation (auto kick/ban/banned words)
-status: todo
+status: in_progress
 priority: high
 type: feature
 tags: [moderation, security, telegram, backend, frontend]
@@ -28,23 +28,23 @@ Perlu integrate dengan:
 Semua log tindakan security perlu direkod (siapa, group mana, sebab apa).
 
 ## Checklist
-- [ ] Semak struktur sedia ada: `moderationService`, `telegramService`, `groupService`, dan `/api/telegram/webhook`
+- [x] Semak struktur sedia ada: `moderationService`, `telegramService`, `groupService`, dan `/api/telegram/webhook`
 - [ ] Pastikan database ada jadual untuk moderation rules & logs; tambah kolum/tabla jika perlu (guna Supabase)
-- [ ] Tambah atau extend servis moderation supaya:
-  - [ ] Boleh simpan dan baca senarai banned words per bot/group
-  - [ ] Simpan setting: autoDelete, autoKick, autoBan, dan thresholds
-  - [ ] Simpan log offense per user (kira berapa kali dia langgar)
+- [x] Tambah atau extend servis moderation supaya:
+  - [x] Boleh simpan dan baca senarai banned words per bot/group
+  - [x] Simpan setting: autoDelete, autoKick, autoBan, dan thresholds
+  - [x] Simpan log offense per user (kira berapa kali dia langgar)
 - [ ] Update Telegram webhook handler supaya:
-  - [ ] Setiap mesej masuk akan di-scan banned words dan rules
-  - [ ] Bila detect:
-    - [ ] Auto delete mesej jika autoDelete aktif
-    - [ ] Kira offense count dan jika lepas threshold, guna telegramService untuk:
-      - [ ] Kick user dari group (auto kick)
-      - [ ] Ban user (block join) jika autoBan aktif
-    - [ ] Rekod log tindakan ke database
+  - [x] Setiap mesej masuk akan di-scan banned words dan rules
+  - [x] Bila detect:
+    - [x] Auto delete mesej jika autoDelete aktif
+    - [x] Kira offense count dan jika lepas threshold, guna telegramService untuk:
+      - [x] Kick user dari group (auto kick)
+      - [x] Ban user (block join) jika autoBan aktif
+    - [x] Rekod log tindakan ke database
 - [ ] Update UI page `dashboard/moderation`:
-  - [ ] Section untuk manage banned words (list, add, remove)
-  - [ ] Toggles untuk auto delete / auto kick / auto ban
-  - [ ] Input threshold (contoh: berapa kali offense sebelum kick/ban)
+  - [x] Section untuk manage banned words (list, add, remove)
+  - [x] Toggles untuk auto delete / auto kick / auto ban
+  - [x] Input threshold (contoh: berapa kali offense sebelum kick/ban)
 - [ ] Pastikan semua teks baharu guna sistem i18n (sekurang‑kurangnya English + BM)
 - [ ] Run check for errors (lint + typecheck) dan pastikan dashboard & webhook build tanpa error
