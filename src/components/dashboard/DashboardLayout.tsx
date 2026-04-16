@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { LiveChatViewer } from "@/components/dashboard/LiveChatViewer";
+import { DigitalClock } from "@/components/dashboard/DigitalClock";
 import {
   Sidebar,
   SidebarContent,
@@ -272,6 +273,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
+            <DigitalClock />
             <div className="flex-1" />
             <Button
               variant="outline"
