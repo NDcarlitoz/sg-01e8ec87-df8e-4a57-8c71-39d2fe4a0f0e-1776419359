@@ -308,6 +308,67 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   {t("lang.en")}
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setLocale("zh")}
+                  className={locale === "zh" ? "font-semibold" : ""}
+                >
+                  {t("lang.zh")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("th")}
+                  className={locale === "th" ? "font-semibold" : ""}
+                >
+                  {t("lang.th")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("my")}
+                  className={locale === "my" ? "font-semibold" : ""}
+                >
+                  {t("lang.my")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("ko")}
+                  className={locale === "ko" ? "font-semibold" : ""}
+                >
+                  {t("lang.ko")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("ja")}
+                  className={locale === "ja" ? "font-semibold" : ""}
+                >
+                  {t("lang.ja")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("hi")}
+                  className={locale === "hi" ? "font-semibold" : ""}
+                >
+                  {t("lang.hi")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("ta")}
+                  className={locale === "ta" ? "font-semibold" : ""}
+                >
+                  {t("lang.ta")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("ar")}
+                  className={locale === "ar" ? "font-semibold" : ""}
+                >
+                  {t("lang.ar")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("ru")}
+                  className={locale === "ru" ? "font-semibold" : ""}
+                >
+                  {t("lang.ru")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("it")}
+                  className={locale === "it" ? "font-semibold" : ""}
+                >
+                  {t("lang.it")}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex-1" />
