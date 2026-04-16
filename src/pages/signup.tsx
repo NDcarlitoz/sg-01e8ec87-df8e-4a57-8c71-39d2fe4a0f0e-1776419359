@@ -15,44 +15,36 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess(false);
-    setLoading(true);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
+      setError("Passwords don't match");
       return;
     }
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
-      setLoading(false);
       return;
     }
 
-    try {
-      const { error } = await authService.signUp(email, password);
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 2000);
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
+    setIsLoading(true);
+
+    const { error: signUpError } = await authService.signUp(email, password, fullName);
+
+    if (signUpError) {
+      setError(signUpError);
+      setIsLoading(false);
+      return;
     }
+
+    // Show success message and redirect
+    router.push("/dashboard");
   };
 
   return (
@@ -79,16 +71,19 @@ export default function SignupPage() {
             </Alert>
           )}
 
-          {success && (
-            <Alert className="mb-6 border-success bg-success/10">
-              <CheckCircle2 className="h-4 w-4 text-success" />
-              <AlertDescription className="text-success">
-                Account created successfully! Redirecting to dashboard...
-              </AlertDescription>
-            </Alert>
-          )}
-
           <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="John Smith"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -98,7 +93,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={loading || success}
+                disabled={isLoading}
               />
             </div>
 
@@ -111,7 +106,7 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                disabled={loading || success}
+                disabled={isLoading}
               />
               <p className="text-xs text-muted-foreground">
                 Must be at least 6 characters
@@ -127,24 +122,19 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                disabled={loading || success}
+                disabled={isLoading}
               />
             </div>
 
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={loading || success}
+              disabled={isLoading}
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...
-                </>
-              ) : success ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Account created!
                 </>
               ) : (
                 "Create Account"
