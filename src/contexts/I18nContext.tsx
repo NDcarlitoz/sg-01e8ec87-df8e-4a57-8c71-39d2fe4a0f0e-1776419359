@@ -2,7 +2,19 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 
-type Locale = "en" | "ms";
+type Locale =
+  | "en"
+  | "ms"
+  | "zh"
+  | "th"
+  | "my"
+  | "ko"
+  | "ja"
+  | "hi"
+  | "ta"
+  | "ar"
+  | "ru"
+  | "it";
 
 interface I18nContextValue {
   locale: Locale;
@@ -12,37 +24,49 @@ interface I18nContextValue {
 
 const I18N_STORAGE_KEY = "dashboard_locale";
 
+const baseEnglishTranslations: Record<string, string> = {
+  "lang.label": "Language",
+  "lang.en": "English",
+  "lang.ms": "Bahasa Malaysia",
+  "lang.zh": "Chinese",
+  "lang.th": "Thai",
+  "lang.my": "Myanmar",
+  "lang.ko": "Korean",
+  "lang.ja": "Japanese",
+  "lang.hi": "Hindi",
+  "lang.ta": "Tamil",
+  "lang.ar": "Arabic",
+  "lang.ru": "Russian",
+  "lang.it": "Italian",
+
+  "sidebar.group.dashboard": "Dashboard",
+  "sidebar.group.botManagement": "Bot Management",
+  "sidebar.group.automation": "Automation",
+  "sidebar.group.business": "Business Tools",
+  "sidebar.group.account": "Account",
+
+  "sidebar.item.overview": "Overview",
+  "sidebar.item.users": "Users",
+  "sidebar.item.logs": "Logs",
+  "sidebar.item.channels": "Channels",
+  "sidebar.item.botSettings": "Bot Settings",
+  "sidebar.item.groups": "Groups",
+  "sidebar.item.broadcast": "Broadcast",
+  "sidebar.item.autoReply": "Auto Reply",
+  "sidebar.item.segments": "Segments",
+  "sidebar.item.moderation": "Moderation",
+  "sidebar.item.livegram": "Livegram",
+  "sidebar.item.affiliates": "Affiliates",
+  "sidebar.item.affiliateSettings": "Affiliate Settings",
+  "sidebar.item.leads": "Leads",
+  "sidebar.item.analytics": "Analytics",
+  "sidebar.item.botMenu": "Bot Menu",
+  "sidebar.item.profile": "Profile",
+  "sidebar.item.settings": "Settings",
+};
+
 const translations: Record<Locale, Record<string, string>> = {
-  en: {
-    "lang.label": "Language",
-    "lang.en": "English",
-    "lang.ms": "Bahasa Malaysia",
-
-    "sidebar.group.dashboard": "Dashboard",
-    "sidebar.group.botManagement": "Bot Management",
-    "sidebar.group.automation": "Automation",
-    "sidebar.group.business": "Business Tools",
-    "sidebar.group.account": "Account",
-
-    "sidebar.item.overview": "Overview",
-    "sidebar.item.users": "Users",
-    "sidebar.item.logs": "Logs",
-    "sidebar.item.channels": "Channels",
-    "sidebar.item.botSettings": "Bot Settings",
-    "sidebar.item.groups": "Groups",
-    "sidebar.item.broadcast": "Broadcast",
-    "sidebar.item.autoReply": "Auto Reply",
-    "sidebar.item.segments": "Segments",
-    "sidebar.item.moderation": "Moderation",
-    "sidebar.item.livegram": "Livegram",
-    "sidebar.item.affiliates": "Affiliates",
-    "sidebar.item.affiliateSettings": "Affiliate Settings",
-    "sidebar.item.leads": "Leads",
-    "sidebar.item.analytics": "Analytics",
-    "sidebar.item.botMenu": "Bot Menu",
-    "sidebar.item.profile": "Profile",
-    "sidebar.item.settings": "Settings",
-  },
+  en: baseEnglishTranslations,
   ms: {
     "lang.label": "Bahasa",
     "lang.en": "Inggeris",
@@ -73,6 +97,16 @@ const translations: Record<Locale, Record<string, string>> = {
     "sidebar.item.profile": "Profil",
     "sidebar.item.settings": "Tetapan",
   },
+  zh: baseEnglishTranslations,
+  th: baseEnglishTranslations,
+  my: baseEnglishTranslations,
+  ko: baseEnglishTranslations,
+  ja: baseEnglishTranslations,
+  hi: baseEnglishTranslations,
+  ta: baseEnglishTranslations,
+  ar: baseEnglishTranslations,
+  ru: baseEnglishTranslations,
+  it: baseEnglishTranslations,
 };
 
 const I18nContext = createContext<I18nContextValue | undefined>(undefined);
@@ -83,7 +117,7 @@ function getInitialLocale(): Locale {
   }
 
   const stored = window.localStorage.getItem(I18N_STORAGE_KEY) as Locale | null;
-  if (stored === "en" || stored === "ms") {
+  if (stored && stored in translations) {
     return stored;
   }
 
