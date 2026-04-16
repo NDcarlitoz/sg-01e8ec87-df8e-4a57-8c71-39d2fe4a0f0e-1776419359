@@ -7,55 +7,55 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 210 24% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 210 24% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 69% 33%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --popover-foreground: 210 24% 16%;
+    --primary: 214 95% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 210 24% 16%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 217 91% 60%;
+    --accent: 214 95% 51%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 69% 33%;
-    --radius: 0.5rem;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 214 95% 51%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 210 24% 10%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 13%;
+    --card: 210 24% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 13%;
+    --popover: 210 24% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
+    --primary: 214 95% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 24% 18%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
+    --muted: 210 24% 18%;
     --muted-foreground: 215 20% 65%;
-    --accent: 217 91% 60%;
+    --accent: 214 95% 51%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+    --border: 210 24% 18%;
+    --input: 210 24% 18%;
+    --ring: 214 95% 51%;
   }
 }
 
@@ -64,7 +64,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground transition-colors;
+    @apply bg-background text-foreground;
     font-family: 'Work Sans', system-ui, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {

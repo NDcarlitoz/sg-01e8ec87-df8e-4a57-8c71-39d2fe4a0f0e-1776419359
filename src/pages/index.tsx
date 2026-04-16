@@ -1,34 +1,42 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { SEO } from "@/components/SEO";
-import { Hero } from "@/components/landing/Hero";
-import { Features } from "@/components/landing/Features";
-import { SocialProof } from "@/components/landing/SocialProof";
-import { Pricing } from "@/components/landing/Pricing";
-import { Footer } from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    // Redirect to dashboard if already logged in
-    if (user) {
-      router.push("/dashboard");
+    if (!loading) {
+      if (user) {
+        // Redirect to dashboard if already logged in
+        router.push("/dashboard");
+      } else {
+        // Redirect to login if not logged in
+        router.push("/login");
+      }
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
-  return (
-    <>
-      <SEO />
-      <div className="min-h-screen">
-        <Hero />
-        <Features />
-        <SocialProof />
-        <Pricing />
-        <Footer />
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
+        </div>
       </div>
-    </>
+    );
+  }
+
+  // While redirecting, show nothing (or loading)
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <p className="mt-4 text-sm text-muted-foreground">Redirecting...</p>
+      </div>
+    </div>
   );
 }

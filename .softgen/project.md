@@ -5,20 +5,21 @@ Platform admin untuk manage Telegram automation bot dengan features lengkap - bo
 
 ## Design
 Color palette (HSL format):
-- `--primary: 221 69% 33%` (deep indigo - professional)
-- `--accent: 217 91% 60%` (bright blue - interactive)
+- `--primary: 214 95% 51%` (bright blue - professional, clean)
+- `--accent: 214 95% 51%` (blue - interactive elements)
 - `--success: 142 76% 36%` (green - positive actions)
 - `--warning: 38 92% 50%` (amber - alerts)
 - `--background: 0 0% 100%` (clean white)
-- `--foreground: 222 47% 11%` (near-black text)
-- `--muted: 210 40% 96%` (light gray backgrounds)
-- `--border: 214 32% 91%` (subtle borders)
+- `--foreground: 210 24% 16%` (dark blue-grey text)
+- `--muted: 210 40% 96%` (light grey backgrounds)
+- `--border: 214 32% 91%` (subtle grey borders)
+- `--secondary: 214 32% 91%` (light grey surfaces)
 
 Typography:
 - Headings: Plus Jakarta Sans (600, 700)
 - Body: Work Sans (400, 500, 600)
 
-Style direction: Modern admin dashboard dengan Telegram-inspired accents - clean, functional, data-dense tapi organized dengan clear visual hierarchy.
+Style direction: Modern admin dashboard dengan blue & grey professional theme - clean, functional, data-dense tapi organized dengan clear visual hierarchy.
 
 ## Features
 - **Bot Settings**: Configure welcome messages, menu buttons, auto-replies
@@ -42,13 +43,13 @@ Style direction: Modern admin dashboard dengan Telegram-inspired accents - clean
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 221 69% 33%;
+    --primary: 214 95% 51%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
+    --secondary: 214 32% 91%;
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 217 91% 60%;
+    --accent: 214 95% 51%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;

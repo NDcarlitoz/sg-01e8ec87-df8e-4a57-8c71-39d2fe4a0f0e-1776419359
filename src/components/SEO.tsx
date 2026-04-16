@@ -13,18 +13,7 @@ export function SEOElements({
   description = "Welcome to my app",
   image = "/og-image.png",
   url,
-}: SEOProps) {
-  return (
-    <>
-      <title>{title}</title>
-      <meta name="description" content={description} />
-      <link rel="icon" href="/favicon.ico" />
-
-      {/* Open Graph */}
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      {image && <meta property="og:image" content={image} />}
-      {url && <meta property="og:url" content={url} />}
+rl && <meta property="og:url" content={url} />}
       <meta property="og:type" content="website" />
 
       {/* Twitter */}
@@ -39,12 +28,11 @@ export function SEOElements({
 // SEO component for use in pages/_app.tsx or individual pages (uses next/head)
 // Note: Flattened structure (no fragment) for better Next.js Head compatibility during hot reload
 export function SEO({
-  title = "Hello World",
-  description = "Welcome to my app",
+  title = "Telegram Automation Bot",
+  description = "Welcome to MMautobot by smart automation system.\\n\\n⚙️ Auto process\\n📡 Real-time system\\n🔐 Secure & optimized\\n\\nBuilt for speed. Designed for results.y app",
   image = "/og-image.png",
   url,
-}: SEOProps) {
-  return (
+turn (
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
