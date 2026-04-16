@@ -437,7 +437,7 @@ export default function BotSettings() {
                             <div className="flex items-center gap-2">
                               <Switch
                                 checked={token.is_active || false}
-                                onCheckedChange={() => handleToggleStatus(token.id, token.is_active || false)}
+                                onCheckedChange={() => handleToggleStatus(token)}
                               />
                               {webhookStatuses[token.id]?.checking ? (
                                 <Badge variant="outline" className="gap-1">
