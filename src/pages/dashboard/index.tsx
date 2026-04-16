@@ -89,8 +89,9 @@ export default function BotSettings() {
     const { data } = await botTokenService.getBotTokens();
     if (data) {
       setBotTokens(data);
-      // Auto-check webhook status for each bot
-      data.forEach(bot => checkWebhookStatus(bot.id));
+      // Temporarily disabled auto-check to prevent 404 errors
+      // Will check manually when user clicks "Check Status" button
+      // data.forEach(bot => checkWebhookStatus(bot.id));
     }
   };
 
