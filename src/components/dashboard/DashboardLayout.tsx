@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { LiveChatViewer } from "@/components/dashboard/LiveChatViewer";
 import { DigitalClock } from "@/components/dashboard/DigitalClock";
@@ -62,6 +63,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { locale, setLocale, t } = useI18n();
   const [userProfile, setUserProfile] = useState<{ full_name?: string; email?: string } | null>(null);
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const pathname = router.pathname;
@@ -103,41 +105,51 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const botManagementNav = [
-    { name: "Bot Settings", href: "/dashboard", icon: Bot },
-    { name: "Groups", href: "/dashboard/groups", icon: Users },
-    { name: "Channels", href: "/dashboard/channels", icon: Hash },
-    { name: "Broadcast", href: "/dashboard/broadcast", icon: Send },
+    { labelKey: "sidebar.item.botSettings", href: "/dashboard", icon: Bot },
+    { labelKey: "sidebar.item.groups", href: "/dashboard/groups", icon: Users },
+    { labelKey: "sidebar.item.channels", href: "/dashboard/channels", icon: Hash },
+    { labelKey: "sidebar.item.broadcast", href: "/dashboard/broadcast", icon: Send },
   ];
 
   const automationNav = [
-    { name: "Auto-Reply", href: "/dashboard/auto-reply", icon: Zap },
-    { name: "Segments", href: "/dashboard/segments", icon: Filter },
-    { name: "Moderation", href: "/dashboard/moderation", icon: Shield },
-    { name: "Livegram", href: "/dashboard/livegram", icon: Radio },
+    { labelKey: "sidebar.item.autoReply", href: "/dashboard/auto-reply", icon: Zap },
+    { labelKey: "sidebar.item.segments", href: "/dashboard/segments", icon: Filter },
+    { labelKey: "sidebar.item.moderation", href: "/dashboard/moderation", icon: Shield },
+    { labelKey: "sidebar.item.livegram", href: "/dashboard/livegram", icon: Radio },
   ];
 
   const accountNav = [
-    { name: "Profile", href: "/dashboard/profile", icon: User },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { labelKey: "sidebar.item.profile", href: "/dashboard/profile", icon: User },
+    { labelKey: "sidebar.item.settings", href: "/dashboard/settings", icon: Settings },
   ];
 
   // Build business tools nav dynamically
   const affiliateEnabled = true; // Feature flag for affiliate system
   const businessToolsNav = [
-    { name: "Users", href: "/dashboard/users", icon: UserCog },
-    ...(affiliateEnabled ? [
-      { name: "Affiliates", href: "/dashboard/affiliates", icon: DollarSign }
-    ] : []),
-    { name: "Affiliate Settings", href: "/dashboard/affiliate-settings", icon: Settings },
-    { name: "Leads", href: "/dashboard/leads", icon: MessageSquare },
-    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-    { name: "Bot Menu", href: "/dashboard/bot-menu", icon: Bot },
+    { labelKey: "sidebar.item.users", href: "/dashboard/users", icon: UserCog },
+    ...(affiliateEnabled
+      ? [
+          {
+            labelKey: "sidebar.item.affiliates",
+            href: "/dashboard/affiliates",
+            icon: DollarSign,
+          },
+        ]
+      : []),
+    {
+      labelKey: "sidebar.item.affiliateSettings",
+      href: "/dashboard/affiliate-settings",
+      icon: Settings,
+    },
+    { labelKey: "sidebar.item.leads", href: "/dashboard/leads", icon: MessageSquare },
+    { labelKey: "sidebar.item.analytics", href: "/dashboard/analytics", icon: BarChart3 },
+    { labelKey: "sidebar.item.botMenu", href: "/dashboard/bot-menu", icon: Bot },
   ];
 
-  const renderMenuItem = (item: { name: string; href: string; icon: any }) => {
+  const renderMenuItem = (item: { labelKey: string; href: string; icon: any }) => {
     const isActive = router.pathname === item.href;
     return (
-      <SidebarMenuItem key={item.name}>
+      <SidebarMenuItem key={item.labelKey}>
         <SidebarMenuButton
           onClick={() => router.push(item.href)}
           isActive={isActive}
@@ -148,7 +160,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           }`}
         >
           <item.icon className="h-4 w-4" />
-          <span>{item.name}</span>
+          <span>{t(item.labelKey)}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
@@ -172,7 +184,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <SidebarMenuButton asChild isActive={router.pathname === "/dashboard"}>
                     <Link href="/dashboard">
                       <LayoutDashboard className="h-4 w-4" />
-                      <span>Dashboard</span>
+                      <span>{t("sidebar.item.overview")}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -181,7 +193,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/users"}>
                     <Link href="/dashboard/users">
                       <Users className="h-4 w-4" />
-                      <span>Users</span>
+                      <span>{t("sidebar.item.users")}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -190,7 +202,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/logs"}>
                     <Link href="/dashboard/logs">
                       <FileText className="h-4 w-4" />
-                      <span>Logs</span>
+                      <span>{t("sidebar.item.logs")}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -199,7 +211,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/channels"}>
                     <Link href="/dashboard/channels">
                       <Radio className="h-4 w-4" />
-                      <span>Channels</span>
+                      <span>{t("sidebar.item.channels")}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -208,7 +220,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Bot Management
+                {t("sidebar.group.botManagement")}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-0.5 px-2">
@@ -219,7 +231,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Automation
+                {t("sidebar.group.automation")}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-0.5 px-2">
@@ -230,7 +242,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Business Tools
+                {t("sidebar.group.business")}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-0.5 px-2">
@@ -241,7 +253,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Account
+                {t("sidebar.group.account")}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-0.5 px-2">
@@ -274,6 +286,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <DigitalClock />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <span className="text-xs uppercase">{locale.toUpperCase()}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{t("lang.label")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setLocale("ms")}
+                  className={locale === "ms" ? "font-semibold" : ""}
+                >
+                  {t("lang.ms")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLocale("en")}
+                  className={locale === "en" ? "font-semibold" : ""}
+                >
+                  {t("lang.en")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="flex-1" />
             <Button
               variant="outline"
