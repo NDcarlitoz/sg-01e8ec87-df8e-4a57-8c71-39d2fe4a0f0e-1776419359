@@ -190,7 +190,7 @@ export default function Logs() {
                     <div className="mt-2 flex gap-2">
                       {Object.entries(stats.byType).map(([type, count]) => (
                         <Badge key={type} variant="outline" className="text-xs">
-                          {type}: {count}
+                          {type}: {String(count)}
                         </Badge>
                       ))}
                     </div>
