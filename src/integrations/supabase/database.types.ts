@@ -1802,7 +1802,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_bot_for_webhook: {
+        Args: { bot_id: string }
+        Returns: {
+          bot_name: string
+          bot_token: string
+          bot_username: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
