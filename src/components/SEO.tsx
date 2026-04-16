@@ -1,47 +1,27 @@
-import Head from 'next/head';
+import Head from "next/head";
 
-interface SEOProps {
+export interface SEOProps {
   title?: string;
   description?: string;
   image?: string;
   url?: string;
 }
 
-// SEO elements that can be used in _document.tsx (returns JSX without Head wrapper)
-export function SEOElements({
-  title = "Hello World",
-  description = "Welcome to my app",
-  image = "/og-image.png",
-  url,
-rl && <meta property="og:url" content={url} />}
-      <meta property="og:type" content="website" />
-
-      {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
-      {image && <meta name="twitter:image" content={image} />}
-    </>
-  );
-}
-
-// SEO component for use in pages/_app.tsx or individual pages (uses next/head)
-// Note: Flattened structure (no fragment) for better Next.js Head compatibility during hot reload
 export function SEO({
-  title = "Telegram Automation Bot",
-  description = "Welcome to MMautobot by smart automation system.\\n\\n⚙️ Auto process\\n📡 Real-time system\\n🔐 Secure & optimized\\n\\nBuilt for speed. Designed for results.y app",
+  title = "Telegram Bot Admin - Automate Your Telegram Bot",
+  description = "Professional Telegram bot automation platform with broadcast, auto-reply, moderation, analytics, and more.",
   image = "/og-image.png",
   url,
-turn (
+}: SEOProps) {
+  return (
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
-      <link rel="icon" href="/favicon.ico" />
 
       {/* Open Graph */}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      {image && <meta property="og:image" content={image} />}
+      <meta property="og:image" content={image} />
       {url && <meta property="og:url" content={url} />}
       <meta property="og:type" content="website" />
 
@@ -49,7 +29,34 @@ turn (
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      {image && <meta name="twitter:image" content={image} />}
+      <meta name="twitter:image" content={image} />
+
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link rel="icon" href="/favicon.ico" />
     </Head>
+  );
+}
+
+// For _document.tsx static SEO (no Head wrapper)
+export function SEOElements({
+  title = "Telegram Bot Admin - Automate Your Telegram Bot",
+  description = "Professional Telegram bot automation platform with broadcast, auto-reply, moderation, analytics, and more.",
+  image = "/og-image.png",
+  url,
+}: SEOProps) {
+  return (
+    <>
+      <title>{title}</title>
+      <meta name="description" content={description} />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={image} />
+      {url && <meta property="og:url" content={url} />}
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={image} />
+    </>
   );
 }
