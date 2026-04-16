@@ -43,15 +43,26 @@ export const telegramService = {
    */
   async getBotInfo(botToken: string): Promise<{ data: TelegramUser | null; error: string | null }> {
     try {
-      const response = await fetch(`${TELEGRAM_API_BASE}${botToken}/getMe`);
+      console.log("TelegramService: Verifying token:", botToken.substring(0, 20) + "...");
+      
+      const url = `${TELEGRAM_API_BASE}${botToken}/getMe`;
+      console.log("TelegramService: Calling URL:", url.substring(0, 50) + "...");
+      
+      const response = await fetch(url);
+      console.log("TelegramService: Response status:", response.status);
+      
       const data: TelegramResponse<TelegramUser> = await response.json();
+      console.log("TelegramService: Response data:", data);
       
       if (!data.ok) {
+        console.error("TelegramService: Telegram API error:", data.description);
         return { data: null, error: data.description || "Failed to get bot info" };
       }
       
+      console.log("TelegramService: Bot verified successfully:", data.result);
       return { data: data.result || null, error: null };
     } catch (error) {
+      console.error("TelegramService: Exception:", error);
       return { data: null, error: error instanceof Error ? error.message : "Unknown error" };
     }
   },
