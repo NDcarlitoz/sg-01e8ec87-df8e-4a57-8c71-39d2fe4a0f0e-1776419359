@@ -30,20 +30,22 @@ export default function Logs() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [stats, setStats] = useState({ total: 0, today: 0, byType: {} });
   const [isLoading, setIsLoading] = useState(false);
-  const [filter, setFilter] = useState<LogsFilter>({});
+  const [filter, setFilter] = useState<LogsFilter>({
+    type: "all",
+    search: "",
+  });
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const { toast } = useToast();
 
   useEffect(() => {
     loadLogs();
-    loadStats();
   }, [filter]);
 
   const loadLogs = async () => {
     setIsLoading(true);
-    const { data, error } = await logsService.getLogs(filter, 100, 0);
-    setIsLoading(false);
+    const filterToApply = filter.type === "all" ? { ...filter, type: undefined } : filter;
+    const { data, error } = await logsService.getLogs(filterToApply);
 
     if (error) {
       toast({
@@ -51,16 +53,17 @@ export default function Logs() {
         description: error,
         variant: "destructive",
       });
-      return;
     }
 
     if (data) {
       setLogs(data);
     }
+
+    setIsLoading(false);
   };
 
   const loadStats = async () => {
-    const { data } = await logsService.getLogsStats();
+    const { data } = await logsService.getStats();
     if (data) {
       setStats(data);
     }

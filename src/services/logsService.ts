@@ -9,13 +9,18 @@ export interface LogEntry {
   created_at: string;
   user_name?: string;
   user_username?: string;
+  bot_user?: {
+    full_name: string;
+    username: string | null;
+  };
 }
 
 export interface LogsFilter {
-  interaction_type?: string;
+  type?: string;
+  userId?: string;
   search?: string;
-  start_date?: string;
-  end_date?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const logsService = {
