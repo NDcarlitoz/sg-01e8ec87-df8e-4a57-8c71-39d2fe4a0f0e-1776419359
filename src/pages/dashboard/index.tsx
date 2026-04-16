@@ -37,6 +37,7 @@ import {
 import { Plus, Pencil, Trash2, Bot, Activity, Zap, Edit, Radio } from "lucide-react";
 import { botTokenService } from "@/services/botTokenService";
 import { profileService } from "@/services/profileService";
+import { WelcomeMessageEditor } from "@/components/bot/WelcomeMessageEditor";
 import type { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,6 +57,7 @@ export default function BotSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [userName, setUserName] = useState("User");
   const [botStats, setBotStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     bot_name: "",
@@ -325,6 +327,38 @@ export default function BotSettings() {
     setIsEditDialogOpen(true);
   };
 
+  const loadWelcomeMessage = async (botId: string) => {
+    const { data } = await botTokenService.getWelcomeMessage(botId);
+    if (data) {
+      setWelcomeMessage(data);
+    }
+  };
+
+  const handleSaveWelcomeMessage = async (message: string) => {
+    if (!selectedToken) return;
+
+    const { success, error } = await botTokenService.updateWelcomeMessage(
+      selectedToken.id,
+      message
+    );
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Welcome message updated successfully",
+    });
+
+    setWelcomeMessage(message);
+  };
+
   const openDeleteDialog = (token: BotToken) => {
     setSelectedToken(token);
     setIsDeleteDialogOpen(true);
@@ -541,6 +575,68 @@ export default function BotSettings() {
               )}
             </CardContent>
           </Card>
+
+          {/* Welcome Message Editor */}
+          {botTokens.length > 0 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="font-heading text-2xl font-bold text-foreground">Welcome Message</h2>
+                <p className="mt-2 text-muted-foreground">
+                  Customize the greeting message users see when they start your bot
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Bot Selector */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Select Bot</CardTitle>
+                    <CardDescription>
+                      Choose which bot's welcome message you want to edit
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {botTokens.map((token) => (
+                        <Button
+                          key={token.id}
+                          variant={selectedToken?.id === token.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedToken(token);
+                            loadWelcomeMessage(token.id);
+                          }}
+                        >
+                          <Bot className="mr-2 h-4 w-4" />
+                          {token.bot_name}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Editor */}
+                {selectedToken && (
+                  <WelcomeMessageEditor
+                    botId={selectedToken.id}
+                    initialMessage={welcomeMessage || undefined}
+                    onSave={handleSaveWelcomeMessage}
+                  />
+                )}
+
+                {!selectedToken && (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Bot className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                      <p className="mt-4 text-muted-foreground">
+                        Select a bot above to edit its welcome message
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Add Bot Token Dialog */}
