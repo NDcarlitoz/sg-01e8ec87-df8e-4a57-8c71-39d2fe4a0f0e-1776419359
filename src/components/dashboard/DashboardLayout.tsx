@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { LiveChatViewer } from "@/components/dashboard/LiveChatViewer";
 import {
   Sidebar,
   SidebarContent,
@@ -61,6 +62,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [userProfile, setUserProfile] = useState<{ full_name?: string; email?: string } | null>(null);
+  const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const pathname = router.pathname;
 
   useEffect(() => {
@@ -271,6 +273,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsLiveChatOpen(true)}
+              className="gap-2"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Live Chat</span>
+            </Button>
             <ThemeSwitch />
           </header>
           <main className="flex-1 p-6">
@@ -278,6 +289,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </SidebarInset>
       </div>
+
+      {/* Live Chat Viewer Dialog */}
+      <LiveChatViewer open={isLiveChatOpen} onOpenChange={setIsLiveChatOpen} />
     </SidebarProvider>
   );
 }
