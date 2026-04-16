@@ -7,95 +7,107 @@ export const profileService = {
   /**
    * Get current user's profile
    */
-  async getCurrentProfile(): Promise<{ data: Profile | null; error: any }> {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return { data: null, error: new Error("Not authenticated") };
+  async getCurrentProfile(): Promise<{ data: Profile | null; error: string | null }> {
+    try {
+      // Use getUser instead of getSession to avoid lock conflicts
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        return { data: null, error: userError?.message || "User not authenticated" };
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Get profile error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Get profile error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    return { data, error };
   },
 
   /**
-   * Update current user's profile
+   * Update user profile
    */
-  async updateProfile(updates: {
-    full_name?: string;
-    avatar_url?: string;
-  }): Promise<{ data: Profile | null; error: any }> {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return { data: null, error: new Error("Not authenticated") };
+  async updateProfile(updates: Partial<Profile>): Promise<{ data: Profile | null; error: string | null }> {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        return { data: null, error: userError?.message || "User not authenticated" };
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Update profile error:", error);
+        return { data: null, error: error.message };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id)
-      .select()
-      .single();
-
-    return { data, error };
   },
 
   /**
-   * Upload avatar image to Supabase Storage
+   * Upload profile avatar
    */
-  async uploadAvatar(file: File): Promise<{ data: string | null; error: any }> {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return { data: null, error: new Error("Not authenticated") };
+  async uploadAvatar(file: File): Promise<{ data: string | null; error: string | null }> {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        return { data: null, error: userError?.message || "User not authenticated" };
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error("Upload avatar error:", uploadError);
+        return { data: null, error: uploadError.message };
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      // Update profile with new avatar URL
+      await this.updateProfile({ avatar_url: publicUrl });
+
+      return { data: publicUrl, error: null };
+    } catch (error) {
+      console.error("Upload avatar error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
-
-    // Create unique filename
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
-
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file, {
-        upsert: true,
-      });
-
-    if (uploadError) {
-      return { data: null, error: uploadError };
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(filePath);
-
-    return { data: publicUrl, error: null };
-  },
-
-  /**
-   * Create profile for new user
-   */
-  async createProfile(userId: string, email: string): Promise<{ data: Profile | null; error: any }> {
-    const { data, error } = await supabase
-      .from("profiles")
-      .insert({
-        id: userId,
-        email,
-      })
-      .select()
-      .single();
-
-    return { data, error };
   },
 };

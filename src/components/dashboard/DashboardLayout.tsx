@@ -1,84 +1,115 @@
 import { ReactNode, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
+  SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
-  Settings,
-  BarChart3,
-  Send,
-  Users,
-  MessageSquare,
-  DollarSign,
-  LogOut,
-  User,
-  Bot,
-  Hash,
-  UserCog,
-  Zap,
-  Filter,
-  Shield,
-  Radio,
-  LayoutDashboard,
-  FileText,
-} from "lucide-react";
-import { authService } from "@/services/authService";
-import { affiliateService } from "@/services/affiliateService";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ThemeSwitch } from "@/components/ThemeSwitch";
-import Link from "next/link";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  LayoutDashboard,
+  Users,
+  Radio,
+  Settings,
+  MessageSquare,
+  Send,
+  Filter,
+  UserCircle,
+  LogOut,
+  ChevronDown,
+  UserPlus,
+  BarChart3,
+  Menu as MenuIcon,
+  DollarSign,
+  FileText,
+  Zap,
+} from "lucide-react";
+import { profileService } from "@/services/profileService";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const botManagementNav = [
-  { name: "Bot Settings", href: "/dashboard", icon: Bot },
-  { name: "Groups", href: "/dashboard/groups", icon: Users },
-  { name: "Channels", href: "/dashboard/channels", icon: Hash },
-  { name: "Broadcast", href: "/dashboard/broadcast", icon: Send },
-];
-
-const automationNav = [
-  { name: "Auto-Reply", href: "/dashboard/auto-reply", icon: Zap },
-  { name: "Segments", href: "/dashboard/segments", icon: Filter },
-  { name: "Moderation", href: "/dashboard/moderation", icon: Shield },
-  { name: "Livegram", href: "/dashboard/livegram", icon: Radio },
-];
-
-const accountNav = [
-  { name: "Profile", href: "/dashboard/profile", icon: User },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
-];
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
-  const [affiliateEnabled, setAffiliateEnabled] = useState(false);
+  const { user, signOut } = useAuth();
+  const [userProfile, setUserProfile] = useState<{ full_name?: string; email?: string } | null>(null);
+  const pathname = router.pathname;
 
   useEffect(() => {
-    checkAffiliateStatus();
-  }, []);
+    loadUserProfile();
+  }, [user]);
 
-  const checkAffiliateStatus = async () => {
-    const enabled = await affiliateService.isEnabled();
-    setAffiliateEnabled(enabled);
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    const { data } = await profileService.getCurrentProfile();
+    if (data) {
+      setUserProfile(data);
+    } else {
+      // Fallback to user email if profile not found
+      setUserProfile({ email: user.email });
+    }
   };
 
-  const handleLogout = async () => {
-    await authService.signOut();
+  const handleSignOut = async () => {
+    await signOut();
     router.push("/login");
   };
+
+  const getUserInitials = () => {
+    if (userProfile?.full_name) {
+      return userProfile.full_name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (userProfile?.email) {
+      return userProfile.email.slice(0, 2).toUpperCase();
+    }
+    return "U";
+  };
+
+  const botManagementNav = [
+    { name: "Bot Settings", href: "/dashboard", icon: Bot },
+    { name: "Groups", href: "/dashboard/groups", icon: Users },
+    { name: "Channels", href: "/dashboard/channels", icon: Hash },
+    { name: "Broadcast", href: "/dashboard/broadcast", icon: Send },
+  ];
+
+  const automationNav = [
+    { name: "Auto-Reply", href: "/dashboard/auto-reply", icon: Zap },
+    { name: "Segments", href: "/dashboard/segments", icon: Filter },
+    { name: "Moderation", href: "/dashboard/moderation", icon: Shield },
+    { name: "Livegram", href: "/dashboard/livegram", icon: Radio },
+  ];
+
+  const accountNav = [
+    { name: "Profile", href: "/dashboard/profile", icon: User },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  ];
 
   // Build business tools nav dynamically
   const businessToolsNav = [

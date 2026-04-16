@@ -1,89 +1,30 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  user_metadata?: any;
-  created_at?: string;
-}
-
-export interface AuthError {
-  message: string;
-  code?: string;
-}
-
-// Dynamic URL Helper
-const getURL = () => {
-  let url = process?.env?.NEXT_PUBLIC_VERCEL_URL ?? 
-           process?.env?.NEXT_PUBLIC_SITE_URL ?? 
-           'http://localhost:3000'
-  
-  // Handle undefined or null url
-  if (!url) {
-    url = 'http://localhost:3000';
-  }
-  
-  // Ensure url has protocol
-  url = url.startsWith('http') ? url : `https://${url}`
-  
-  // Ensure url ends with slash
-  url = url.endsWith('/') ? url : `${url}/`
-  
-  return url
-}
-
+/**
+ * Get current authenticated user
+ * Note: Prefer using useAuth() hook in components for cached session
+ */
 export const authService = {
-  // Get current user
-  async getCurrentUser(): Promise<AuthUser | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user ? {
-      id: user.id,
-      email: user.email || "",
-      user_metadata: user.user_metadata,
-      created_at: user.created_at
-    } : null;
-  },
-
-  // Get current session
-  async getSession(): Promise<Session | null> {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
-  },
-
-  // Sign up with email and password
-  async signUp(email: string, password: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
+  async getCurrentUser(): Promise<{ data: User | null; error: string | null }> {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${getURL()}auth/confirm-email`
-        }
-      });
-
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
       if (error) {
-        return { user: null, error: { message: error.message, code: error.status?.toString() } };
+        return { data: null, error: error.message };
       }
 
-      const authUser = data.user ? {
-        id: data.user.id,
-        email: data.user.email || "",
-        user_metadata: data.user.user_metadata,
-        created_at: data.user.created_at
-      } : null;
-
-      return { user: authUser, error: null };
+      return { data: user, error: null };
     } catch (error) {
-      return { 
-        user: null, 
-        error: { message: "An unexpected error occurred during sign up" } 
+      console.error("Get current user error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   },
 
-  // Sign in with email and password
-  async signIn(email: string, password: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
+  async signIn(email: string, password: string): Promise<{ data: User | null; error: string | null }> {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -91,63 +32,114 @@ export const authService = {
       });
 
       if (error) {
-        return { user: null, error: { message: error.message, code: error.status?.toString() } };
+        return { data: null, error: error.message };
       }
 
-      const authUser = data.user ? {
-        id: data.user.id,
-        email: data.user.email || "",
-        user_metadata: data.user.user_metadata,
-        created_at: data.user.created_at
-      } : null;
-
-      return { user: authUser, error: null };
+      return { data: data.user, error: null };
     } catch (error) {
-      return { 
-        user: null, 
-        error: { message: "An unexpected error occurred during sign in" } 
+      console.error("Sign in error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   },
 
-  // Sign out
-  async signOut(): Promise<{ error: AuthError | null }> {
+  async signUp(email: string, password: string, fullName?: string): Promise<{ data: User | null; error: string | null }> {
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        return { error: { message: error.message } };
-      }
-
-      return { error: null };
-    } catch (error) {
-      return { 
-        error: { message: "An unexpected error occurred during sign out" } 
-      };
-    }
-  },
-
-  // Reset password
-  async resetPassword(email: string): Promise<{ error: AuthError | null }> {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getURL()}auth/reset-password`,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName || null,
+          },
+        },
       });
 
       if (error) {
-        return { error: { message: error.message } };
+        return { data: null, error: error.message };
       }
 
-      return { error: null };
+      return { data: data.user, error: null };
     } catch (error) {
-      return { 
-        error: { message: "An unexpected error occurred during password reset" } 
+      console.error("Sign up error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   },
 
-  // Listen to auth state changes
-  onAuthStateChange(callback: (event: string, session: Session | null) => void) {
-    return supabase.auth.onAuthStateChange(callback);
-  }
+  async signOut(): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error("Sign out error:", error);
+      return {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  async resetPassword(email: string): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  async updatePassword(newPassword: string): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error("Update password error:", error);
+      return {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+
+  /**
+   * Helper to get dynamic redirect URL for OAuth
+   */
+  getRedirectUrl(): string {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    // For production, use the actual domain
+    if (window.location.hostname === "mmautobot.it.com") {
+      return "https://mmautobot.it.com";
+    }
+
+    // For development/preview, use current origin
+    return window.location.origin;
+  },
 };
