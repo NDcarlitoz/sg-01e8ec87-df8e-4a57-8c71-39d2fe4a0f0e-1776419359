@@ -1,32 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { authService } from "@/services/authService";
-import { Loader2 } from "lucide-react";
+import { SEO } from "@/components/SEO";
+import { Hero } from "@/components/landing/Hero";
+import { Features } from "@/components/landing/Features";
+import { SocialProof } from "@/components/landing/SocialProof";
+import { Pricing } from "@/components/landing/Pricing";
+import { Footer } from "@/components/landing/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default function HomePage() {
+export default function Home() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    checkAuthAndRedirect();
-  }, []);
-
-  const checkAuthAndRedirect = async () => {
-    const session = await authService.getSession();
-    
-    if (session) {
-      router.replace("/dashboard");
-    } else {
-      router.replace("/login");
+    // Redirect to dashboard if already logged in
+    if (user) {
+      router.push("/dashboard");
     }
-  };
+  }, [user, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading...</p>
+    <>
+      <SEO />
+      <div className="min-h-screen">
+        <Hero />
+        <Features />
+        <SocialProof />
+        <Pricing />
+        <Footer />
       </div>
-    </div>
+    </>
   );
 }

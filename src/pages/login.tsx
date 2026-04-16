@@ -22,18 +22,12 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    try {
-      const { error } = await authService.signIn(email, password);
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        router.push("/dashboard");
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
+    const { error: signInError } = await authService.signIn(email, password);
+
+    if (signInError) {
+      setError(typeof signInError === "string" ? signInError : signInError.message);
+    } else {
+      router.push("/dashboard");
     }
   };
 

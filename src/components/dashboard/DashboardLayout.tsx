@@ -2,11 +2,13 @@ import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -43,6 +45,11 @@ import {
   DollarSign,
   FileText,
   Zap,
+  Bot,
+  Hash,
+  Shield,
+  User,
+  UserCog,
 } from "lucide-react";
 import { profileService } from "@/services/profileService";
 
@@ -112,6 +119,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   // Build business tools nav dynamically
+  const affiliateEnabled = true; // Feature flag for affiliate system
   const businessToolsNav = [
     { name: "Users", href: "/dashboard/users", icon: UserCog },
     ...(affiliateEnabled ? [
@@ -251,7 +259,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               variant="ghost"
               size="sm"
               className="w-full justify-start text-sm text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={handleLogout}
+              onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Log Out
