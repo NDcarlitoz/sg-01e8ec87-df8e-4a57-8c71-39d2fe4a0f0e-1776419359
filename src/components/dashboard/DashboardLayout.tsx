@@ -29,6 +29,7 @@ import {
   Zap,
   Filter,
   Shield,
+  Radio,
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { affiliateService } from "@/services/affiliateService";
@@ -51,6 +52,7 @@ const automationNav = [
   { name: "Auto-Reply", href: "/dashboard/auto-reply", icon: Zap },
   { name: "Segments", href: "/dashboard/segments", icon: Filter },
   { name: "Moderation", href: "/dashboard/moderation", icon: Shield },
+  { name: "Livegram", href: "/dashboard/livegram", icon: Radio },
 ];
 
 const accountNav = [

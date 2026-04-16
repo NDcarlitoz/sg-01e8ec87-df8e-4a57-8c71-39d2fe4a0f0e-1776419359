@@ -1386,6 +1386,142 @@ export type Database = {
           },
         ]
       }
+      livegram_logs: {
+        Row: {
+          destination_chat_id: number
+          destination_message_id: number | null
+          error_message: string | null
+          forwarded_at: string | null
+          id: string
+          rule_id: string | null
+          source_chat_id: number
+          source_message_id: number
+          status: string | null
+        }
+        Insert: {
+          destination_chat_id: number
+          destination_message_id?: number | null
+          error_message?: string | null
+          forwarded_at?: string | null
+          id?: string
+          rule_id?: string | null
+          source_chat_id: number
+          source_message_id: number
+          status?: string | null
+        }
+        Update: {
+          destination_chat_id?: number
+          destination_message_id?: number | null
+          error_message?: string | null
+          forwarded_at?: string | null
+          id?: string
+          rule_id?: string | null
+          source_chat_id?: number
+          source_message_id?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livegram_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "livegram_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      livegram_rules: {
+        Row: {
+          add_watermark: boolean | null
+          created_at: string | null
+          delay_seconds: number | null
+          destinations: Json
+          edit_message: boolean | null
+          exclude_keywords: Json | null
+          filter_keywords: Json | null
+          filter_message_types: Json | null
+          filter_user_types: Json | null
+          forward_mode: string | null
+          id: string
+          is_active: boolean | null
+          last_forwarded_at: string | null
+          message_template: string | null
+          owner_id: string
+          preserve_formatting: boolean | null
+          remove_caption: boolean | null
+          rule_name: string
+          send_as_admin: boolean | null
+          source_chat_id: number
+          source_chat_title: string | null
+          source_chat_type: string | null
+          total_forwarded: number | null
+          updated_at: string | null
+          watermark_text: string | null
+        }
+        Insert: {
+          add_watermark?: boolean | null
+          created_at?: string | null
+          delay_seconds?: number | null
+          destinations: Json
+          edit_message?: boolean | null
+          exclude_keywords?: Json | null
+          filter_keywords?: Json | null
+          filter_message_types?: Json | null
+          filter_user_types?: Json | null
+          forward_mode?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_forwarded_at?: string | null
+          message_template?: string | null
+          owner_id: string
+          preserve_formatting?: boolean | null
+          remove_caption?: boolean | null
+          rule_name: string
+          send_as_admin?: boolean | null
+          source_chat_id: number
+          source_chat_title?: string | null
+          source_chat_type?: string | null
+          total_forwarded?: number | null
+          updated_at?: string | null
+          watermark_text?: string | null
+        }
+        Update: {
+          add_watermark?: boolean | null
+          created_at?: string | null
+          delay_seconds?: number | null
+          destinations?: Json
+          edit_message?: boolean | null
+          exclude_keywords?: Json | null
+          filter_keywords?: Json | null
+          filter_message_types?: Json | null
+          filter_user_types?: Json | null
+          forward_mode?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_forwarded_at?: string | null
+          message_template?: string | null
+          owner_id?: string
+          preserve_formatting?: boolean | null
+          remove_caption?: boolean | null
+          rule_name?: string
+          send_as_admin?: boolean | null
+          source_chat_id?: number
+          source_chat_title?: string | null
+          source_chat_type?: string | null
+          total_forwarded?: number | null
+          updated_at?: string | null
+          watermark_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livegram_rules_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_forwards: {
         Row: {
           created_at: string | null
