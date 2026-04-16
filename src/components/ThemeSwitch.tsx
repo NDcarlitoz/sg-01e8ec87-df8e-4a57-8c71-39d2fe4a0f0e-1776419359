@@ -13,7 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function ThemeSwitch() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+
+  const handleSetTheme = (value: "light" | "dark") => {
+    setTheme(value);
+  };
+
+  const isActive = (value: "light" | "dark") => theme === value;
 
   return (
     <DropdownMenu>
@@ -25,14 +31,17 @@ export function ThemeSwitch() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
+        <DropdownMenuItem
+          onClick={() => handleSetTheme("light")}
+          className={isActive("light") ? "font-semibold" : ""}
+        >
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem
+          onClick={() => handleSetTheme("dark")}
+          className={isActive("dark") ? "font-semibold" : ""}
+        >
           Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
