@@ -70,7 +70,7 @@ export function LiveChatViewer({ open, onOpenChange }: LiveChatViewerProps) {
   const loadLogs = async (silent = false) => {
     if (!silent) setIsLoading(true);
 
-    const { data } = await logsService.getAllLogs();
+    const { data } = await logsService.getLogs();
 
     if (data) {
       // Sort by timestamp ascending (oldest first) for chat-like view

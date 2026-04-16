@@ -4,24 +4,18 @@ export interface LogEntry {
   id: string;
   bot_user_id: string;
   interaction_type: string;
-  content: string;
+  content: string | null;
   metadata: any;
   created_at: string;
-  bot_user: {
-    user_id: number;
-    username: string | null;
-    first_name: string;
-    last_name: string | null;
-    full_name: string;
-  };
+  user_name?: string;
+  user_username?: string;
 }
 
 export interface LogsFilter {
-  type?: string;
-  userId?: string;
+  interaction_type?: string;
   search?: string;
-  startDate?: string;
-  endDate?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export const logsService = {
