@@ -168,6 +168,8 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("Webhook endpoint called:", req.method, req.url);
+  
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
