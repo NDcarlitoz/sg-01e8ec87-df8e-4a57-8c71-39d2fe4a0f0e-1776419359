@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Bot, Activity, Zap, Edit } from "lucide-react";
+import { Plus, Pencil, Trash2, Bot, Activity, Zap, Edit, Radio } from "lucide-react";
 import { botTokenService } from "@/services/botTokenService";
 import { profileService } from "@/services/profileService";
 import type { Tables } from "@/integrations/supabase/types";
@@ -44,6 +44,11 @@ type BotToken = Tables<"bot_tokens">;
 
 export default function BotSettings() {
   const [botTokens, setBotTokens] = useState<BotToken[]>([]);
+  const [webhookStatuses, setWebhookStatuses] = useState<Record<string, {
+    is_set: boolean;
+    url: string | null;
+    checking: boolean;
+  }>>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -81,16 +86,34 @@ export default function BotSettings() {
   };
 
   const loadBotTokens = async () => {
-    const { data, error } = await botTokenService.getBotTokens();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load bot tokens",
-        variant: "destructive",
-      });
-      return;
+    const { data } = await botTokenService.getBotTokens();
+    if (data) {
+      setBotTokens(data);
+      // Auto-check webhook status for each bot
+      data.forEach(bot => checkWebhookStatus(bot.id));
     }
-    setBotTokens(data || []);
+  };
+
+  const checkWebhookStatus = async (botId: string) => {
+    setWebhookStatuses(prev => ({
+      ...prev,
+      [botId]: { ...prev[botId], checking: true }
+    }));
+
+    const { data, error } = await botTokenService.checkWebhookStatus(botId);
+    
+    setWebhookStatuses(prev => ({
+      ...prev,
+      [botId]: {
+        is_set: data?.is_set || false,
+        url: data?.url || null,
+        checking: false,
+      }
+    }));
+
+    if (error) {
+      console.error(`Webhook check error for bot ${botId}:`, error);
+    }
   };
 
   const handleAddToken = async () => {
@@ -396,7 +419,7 @@ export default function BotSettings() {
                         <TableHead>Bot Name</TableHead>
                         <TableHead>Username</TableHead>
                         <TableHead>Token</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Status & Webhook</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -413,25 +436,51 @@ export default function BotSettings() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Switch
-                                checked={token.is_active}
-                                onCheckedChange={() => handleToggleStatus(token)}
+                                checked={token.is_active || false}
+                                onCheckedChange={() => handleToggleStatus(token.id, token.is_active || false)}
                               />
-                              <Badge variant={token.is_active ? "default" : "secondary"}>
-                                {token.is_active ? "Active" : "Inactive"}
-                              </Badge>
+                              {webhookStatuses[token.id]?.checking ? (
+                                <Badge variant="outline" className="gap-1">
+                                  <Radio className="h-3 w-3 animate-pulse" />
+                                  Checking...
+                                </Badge>
+                              ) : webhookStatuses[token.id]?.is_set ? (
+                                <Badge variant="default" className="gap-1 bg-success">
+                                  <Radio className="h-3 w-3" />
+                                  Webhook Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="gap-1">
+                                  <Radio className="h-3 w-3" />
+                                  Not Set
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleSetupWebhook(token.id)}
-                                disabled={isLoading}
-                              >
-                                <Zap className="h-4 w-4 mr-1" />
-                                Setup Webhook
-                              </Button>
+                              {webhookStatuses[token.id]?.is_set ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => checkWebhookStatus(token.id)}
+                                  disabled={webhookStatuses[token.id]?.checking}
+                                >
+                                  <Radio className="h-4 w-4 mr-1" />
+                                  Check Status
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSetupWebhook(token.id)}
+                                  disabled={isLoading}
+                                  className="text-warning border-warning hover:bg-warning/10"
+                                >
+                                  <Zap className="h-4 w-4 mr-1" />
+                                  Setup Webhook
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"

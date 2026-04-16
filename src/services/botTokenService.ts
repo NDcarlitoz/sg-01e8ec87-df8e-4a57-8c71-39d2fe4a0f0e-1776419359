@@ -181,6 +181,50 @@ export const botTokenService = {
   },
 
   /**
+   * Check webhook status for a bot
+   */
+  async checkWebhookStatus(botId: string): Promise<{
+    data: {
+      url: string | null;
+      is_set: boolean;
+      pending_updates: number;
+      last_error?: string;
+    } | null;
+    error: string | null;
+  }> {
+    try {
+      const response = await fetch("/api/telegram/check-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { data: null, error: errorData.error || "Failed to check webhook" };
+      }
+
+      const { webhook } = await response.json();
+
+      return {
+        data: {
+          url: webhook.url,
+          is_set: webhook.is_set,
+          pending_updates: webhook.pending_update_count,
+          last_error: webhook.last_error_message,
+        },
+        error: null,
+      };
+    } catch (error) {
+      console.error("Check webhook status error:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Failed to check webhook",
+      };
+    }
+  },
+
+  /**
    * Validate bot token format
    */
   validateBotToken(token: string): boolean {
