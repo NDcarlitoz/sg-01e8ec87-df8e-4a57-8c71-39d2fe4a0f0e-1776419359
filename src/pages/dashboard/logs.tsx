@@ -63,7 +63,7 @@ export default function Logs() {
   };
 
   const loadStats = async () => {
-    const { data } = await logsService.getStats();
+    const { data } = await logsService.getLogsStats();
     if (data) {
       setStats(data);
     }
