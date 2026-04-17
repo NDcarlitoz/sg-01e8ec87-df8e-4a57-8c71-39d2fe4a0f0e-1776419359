@@ -2,26 +2,38 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/integrations/supabase/client";
 import { moderationService } from "@/services/moderationService";
 
+interface TelegramContact {
+  phone_number: string;
+  first_name: string;
+  last_name?: string;
+  user_id?: number;
+}
+
+interface TelegramFrom {
+  id: number;
+  is_bot: boolean;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+}
+
+interface TelegramChat {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  title?: string;
+  type: string;
+}
+
 interface TelegramMessage {
   message_id: number;
-  from: {
-    id: number;
-    is_bot: boolean;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code?: string;
-  };
-  chat: {
-    id: number;
-    first_name?: string;
-    last_name?: string;
-    username?: string;
-    title?: string;
-    type: string;
-  };
+  from: TelegramFrom;
+  chat: TelegramChat;
   date: number;
   text?: string;
+  contact?: TelegramContact;
 }
 
 interface TelegramUpdate {
@@ -29,17 +41,28 @@ interface TelegramUpdate {
   message?: TelegramMessage;
 }
 
-async function sendMessage(botToken: string, chatId: number, text: string) {
+async function sendMessage(
+  botToken: string,
+  chatId: number,
+  text: string,
+  replyMarkup?: any
+) {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+  const payload: any = {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+  };
+
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
 
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: "HTML",
-    }),
+    body: JSON.stringify(payload),
   });
 
   return response.json();
@@ -55,9 +78,26 @@ I'm your Telegram automation assistant.
 /help - Get help and support
 /menu - Show main menu
 
-Feel free to explore!`;
+To get the best experience, please share your phone number using the button below.`;
 
-  await sendMessage(botToken, message.chat.id, welcomeText);
+  const isPrivateChat = message.chat.type === "private";
+
+  const replyMarkup = isPrivateChat
+    ? {
+        keyboard: [
+          [
+            {
+              text: "📱 Share phone number",
+              request_contact: true,
+            },
+          ],
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      }
+    : undefined;
+
+  await sendMessage(botToken, message.chat.id, welcomeText, replyMarkup);
 }
 
 async function handleHelp(botToken: string, message: TelegramMessage) {
@@ -112,12 +152,16 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
 
     let botUserId = existingUser?.id;
 
+    const nowIso = new Date().toISOString();
+
     if (existingUser) {
       await supabase
         .from("bot_users")
         .update({
-          last_interaction: new Date().toISOString(),
-          last_seen: new Date().toISOString(),
+          last_interaction: nowIso,
+          last_seen: nowIso,
+          total_messages: 1,
+          updated_at: nowIso,
         })
         .eq("id", existingUser.id);
     } else {
@@ -133,8 +177,9 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
           language_code: message.from.language_code || "en",
           is_bot: message.from.is_bot,
           is_active: true,
-          last_interaction: new Date().toISOString(),
-          last_seen: new Date().toISOString(),
+          last_interaction: nowIso,
+          last_seen: nowIso,
+          total_messages: 1,
         })
         .select("id")
         .single();
@@ -270,6 +315,85 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
   }
 }
 
+async function handleContactShare(botToken: string, message: TelegramMessage) {
+  const contact = message.contact;
+  if (!contact) {
+    return;
+  }
+
+  try {
+    const { data: botData } = await supabase
+      .from("bot_tokens")
+      .select("user_id")
+      .eq("bot_token", botToken)
+      .single();
+
+    const owner_id = botData?.user_id;
+
+    if (!owner_id) {
+      console.error("Bot owner not found for this token (contact share)");
+      return;
+    }
+
+    const telegramUserId = contact.user_id || message.from.id;
+    const fullName = `${contact.first_name} ${contact.last_name || ""}`.trim();
+    const nowIso = new Date().toISOString();
+
+    const { data: existingUser, error: existingError } = await supabase
+      .from("bot_users")
+      .select("id")
+      .eq("user_id", telegramUserId)
+      .eq("owner_id", owner_id)
+      .single();
+
+    if (!existingError && existingUser) {
+      await supabase
+        .from("bot_users")
+        .update({
+          phone_number: contact.phone_number,
+          full_name:
+            fullName ||
+            `${message.from.first_name} ${message.from.last_name || ""}`.trim() ||
+            null,
+          username: message.from.username || null,
+          last_interaction: nowIso,
+          last_seen: nowIso,
+          updated_at: nowIso,
+        })
+        .eq("id", existingUser.id);
+    } else {
+      await supabase.from("bot_users").insert({
+        owner_id,
+        user_id: telegramUserId,
+        username: message.from.username || null,
+        first_name: contact.first_name || message.from.first_name,
+        last_name: contact.last_name || message.from.last_name || null,
+        full_name:
+          fullName ||
+          `${message.from.first_name} ${message.from.last_name || ""}`.trim() ||
+          null,
+        language_code: message.from.language_code || "en",
+        is_bot: false,
+        is_active: true,
+        phone_number: contact.phone_number,
+        last_interaction: nowIso,
+        last_seen: nowIso,
+        total_messages: 1,
+        created_at: nowIso,
+        updated_at: nowIso,
+      });
+    }
+
+    await sendMessage(
+      botToken,
+      message.chat.id,
+      "✅ Thank you! Your phone number has been recorded.\n\nYou can update it anytime by sharing your contact again."
+    );
+  } catch (error) {
+    console.error("Error handling contact share:", error);
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("Webhook endpoint called:", req.method, req.url);
 
@@ -280,12 +404,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const update: TelegramUpdate = req.body;
 
-    if (!update.message || !update.message.text) {
+    if (!update.message) {
       return res.status(200).json({ ok: true });
     }
 
     const message = update.message;
-    const text = message.text.toLowerCase().trim();
 
     const botToken =
       (req.query.token as string) || (req.headers["x-telegram-bot-token"] as string);
@@ -295,10 +418,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Bot token required" });
     }
 
+    // Always ensure we track user & interactions
     await saveUserToDatabase(message, botToken);
 
+    // If this update contains a shared contact, handle phone capture first
+    if (message.contact) {
+      await handleContactShare(botToken, message);
+      return res.status(200).json({ ok: true });
+    }
+
+    // Apply moderation only for group text messages
     const wasModerated = await handleModeration(message);
     if (wasModerated) {
+      return res.status(200).json({ ok: true });
+    }
+
+    const text = message.text?.toLowerCase().trim() || "";
+
+    if (!text) {
+      // Non-text message (and not a contact) — nothing else to do
       return res.status(200).json({ ok: true });
     }
 

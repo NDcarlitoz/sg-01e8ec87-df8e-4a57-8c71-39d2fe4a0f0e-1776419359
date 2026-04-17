@@ -1,6 +1,6 @@
 ---
 title: Minta nombor telefon masa welcome chat
-status: in_progress
+status: done
 priority: high
 type: feature
 tags: [telegram, bot, leads, backend, frontend]
@@ -13,20 +13,21 @@ position: 20
 Feature: Bila user mula chat dengan bot (contoh `/start` dalam private chat), bot akan:
 - Hantar mesej welcome
 - Minta user share nombor telefon dengan satu butang khas Telegram (request_contact)
-- Bila user tekan butang dan share contact, sistem simpan nombor telefon ke dalam table yang relevan (leads / users) dan ucap terima kasih.
+- Bila user tekan butang dan share contact, sistem simpan nombor telefon ke dalam table yang relevan dan ucap terima kasih.
 
-Perlu:
+Implementasi:
 - Guna `request_contact` keyboard button dalam Telegram API
 - Handle update jenis `message.contact` dalam webhook
-- Simpan phone ke Supabase (guna servis/struktur sedia ada, contohnya `leadService`)
+- Simpan phone ke Supabase dalam kolum `bot_users.phone_number` (boleh guna di Users dashboard)
+- Behaviour di group tidak berubah; fungsi ini fokus untuk private chat (/start) walaupun contact share juga akan disimpan jika dihantar dari tempat lain.
 
 ## Checklist
-- [ ] Semak schema Supabase untuk table yang simpan phone (contoh: `leads` / `profiles` – nama kolum sebenar)
-- [ ] Semak `telegramService` dan webhook handler untuk pattern hantar mesej & keyboard options
-- [ ] Tambah logic di webhook:
-  - [ ] Bila `/start` dalam private chat → hantar welcome + butang "Share phone number" (request_contact)
-  - [ ] Bila terima `message.contact` → call service untuk simpan nombor telefon user (upsert)
-  - [ ] Hantar mesej "terima kasih, nombor telah direkod"
-- [ ] Guna `leadService` atau servis sedia ada untuk simpan phone (jangan duplicate logic)
-- [ ] Pastikan behaviour di group tak terganggu (feature ini fokus untuk private chat)
-- [ ] Run check_for_errors dan pastikan semua build ok
+- [x] Semak schema Supabase untuk table yang simpan phone (contoh: `leads` / `profiles` – nama kolum sebenar)
+- [x] Semak `telegramService` dan webhook handler untuk pattern hantar mesej & keyboard options
+- [x] Tambah logic di webhook:
+  - [x] Bila `/start` dalam private chat → hantar welcome + butang "Share phone number" (request_contact)
+  - [x] Bila terima `message.contact` → simpan nombor telefon user ke `bot_users.phone_number` (upsert)
+  - [x] Hantar mesej "terima kasih, nombor telah direkod"
+- [x] Guna struktur sedia ada (`bot_users`) untuk simpan phone (tanpa duplicate logic leads)
+- [x] Pastikan behaviour di group tak terganggu (feature ini fokus untuk private chat)
+- [x] Run check_for_errors dan pastikan semua build ok
