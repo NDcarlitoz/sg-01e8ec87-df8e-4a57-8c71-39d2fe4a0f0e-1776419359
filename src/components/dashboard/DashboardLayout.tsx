@@ -53,6 +53,7 @@ import {
   Shield,
   User,
   UserCog,
+  BookOpen,
 } from "lucide-react";
 import { profileService } from "@/services/profileService";
 
@@ -109,6 +110,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { labelKey: "sidebar.item.groups", href: "/dashboard/groups", icon: Users },
     { labelKey: "sidebar.item.channels", href: "/dashboard/channels", icon: Hash },
     { labelKey: "sidebar.item.broadcast", href: "/dashboard/broadcast", icon: Send },
+    { labelKey: "sidebar.item.howToUse", href: "/dashboard/how-to-use", icon: BookOpen },
   ];
 
   const automationNav = [
