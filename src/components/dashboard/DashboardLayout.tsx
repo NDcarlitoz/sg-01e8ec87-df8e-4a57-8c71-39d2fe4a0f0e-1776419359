@@ -192,15 +192,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/users"}>
-                    <Link href="/dashboard/users">
-                      <Users className="h-4 w-4" />
-                      <span>{t("sidebar.item.users")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={router.pathname === "/dashboard/logs"}>
                     <Link href="/dashboard/logs">
                       <FileText className="h-4 w-4" />
