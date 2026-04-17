@@ -143,7 +143,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       href: "/dashboard/affiliate-settings",
       icon: Settings,
     },
-    { labelKey: "sidebar.item.leads", href: "/dashboard/leads", icon: MessageSquare },
     { labelKey: "sidebar.item.analytics", href: "/dashboard/analytics", icon: BarChart3 },
     { labelKey: "sidebar.item.botMenu", href: "/dashboard/bot-menu", icon: Bot },
   ];
