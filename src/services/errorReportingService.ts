@@ -115,9 +115,9 @@ class ErrorReportingService {
         page_url: window.location.href,
         page_path: window.location.pathname,
         user_agent: navigator.userAgent,
-        browser_info: browserInfo,
+        browser_info: browserInfo as any,
         component_stack: data.componentStack || null,
-        additional_data: data.additionalData || null,
+        additional_data: data.additionalData as any || null,
       };
 
       // Check for recent duplicate errors (within last 5 minutes)
