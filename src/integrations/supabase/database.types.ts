@@ -847,6 +847,90 @@ export type Database = {
           },
         ]
       }
+      client_errors: {
+        Row: {
+          additional_data: Json | null
+          browser_info: Json | null
+          component_stack: string | null
+          created_at: string | null
+          error_message: string
+          error_stack: string | null
+          error_type: string
+          id: string
+          is_resolved: boolean | null
+          last_occurred_at: string | null
+          occurrence_count: number | null
+          page_path: string
+          page_url: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          session_id: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          additional_data?: Json | null
+          browser_info?: Json | null
+          component_stack?: string | null
+          created_at?: string | null
+          error_message: string
+          error_stack?: string | null
+          error_type: string
+          id?: string
+          is_resolved?: boolean | null
+          last_occurred_at?: string | null
+          occurrence_count?: number | null
+          page_path: string
+          page_url: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          additional_data?: Json | null
+          browser_info?: Json | null
+          component_stack?: string | null
+          created_at?: string | null
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string
+          id?: string
+          is_resolved?: boolean | null
+          last_occurred_at?: string | null
+          occurrence_count?: number | null
+          page_path?: string
+          page_url?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_errors_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currency_exchange_rates: {
         Row: {
           from_currency: string

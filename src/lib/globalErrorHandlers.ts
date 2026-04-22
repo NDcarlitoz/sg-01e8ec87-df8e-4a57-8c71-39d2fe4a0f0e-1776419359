@@ -53,7 +53,7 @@ export function initializeGlobalErrorHandlers(): void {
           errorType: "network",
           severity: "error",
           additionalData: {
-            url: typeof args[0] === "string" ? args[0] : args[0].url,
+            url: args[0] instanceof Request ? args[0].url : String(args[0]),
             status: response.status,
             statusText: response.statusText,
           },
@@ -69,7 +69,7 @@ export function initializeGlobalErrorHandlers(): void {
         errorType: "network",
         severity: "error",
         additionalData: {
-          url: typeof args[0] === "string" ? args[0] : args[0]?.url,
+          url: args[0] instanceof Request ? args[0].url : String(args[0]),
           errorType: error instanceof Error ? error.name : "Unknown",
         },
       });
