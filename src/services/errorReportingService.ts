@@ -33,6 +33,11 @@ class ErrorReportingService {
    * Get or create a unique session ID
    */
   private getOrCreateSessionId(): string {
+    // Handle Next.js Server-Side Rendering (SSR)
+    if (typeof window === "undefined" || typeof sessionStorage === "undefined") {
+      return `ssr_session_${Date.now()}`;
+    }
+
     let sessionId = sessionStorage.getItem("error_session_id");
     if (!sessionId) {
       sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
