@@ -59,16 +59,27 @@ async function sendMessage(
     payload.reply_markup = replyMarkup;
   }
 
+  console.log("📤 Sending message to Telegram:", {
+    chatId,
+    textLength: text.length,
+    hasReplyMarkup: !!replyMarkup,
+  });
+
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
-  return response.json();
+  const result = await response.json();
+  console.log("📥 Telegram API response:", result);
+
+  return result;
 }
 
 async function handleStart(botToken: string, message: TelegramMessage) {
+  console.log("▶️ Handling /start command for user:", message.from.id);
+
   const welcomeText = `👋 <b>Welcome to the bot!</b>
 
 I'm your Telegram automation assistant.
@@ -98,9 +109,12 @@ To get the best experience, please share your phone number using the button belo
     : undefined;
 
   await sendMessage(botToken, message.chat.id, welcomeText, replyMarkup);
+  console.log("✅ /start command handled successfully");
 }
 
 async function handleHelp(botToken: string, message: TelegramMessage) {
+  console.log("❓ Handling /help command for user:", message.from.id);
+
   const helpText = `ℹ️ <b>Help & Support</b>
 
 <b>Available Commands:</b>
@@ -112,9 +126,12 @@ async function handleHelp(botToken: string, message: TelegramMessage) {
 Contact support through the dashboard.`;
 
   await sendMessage(botToken, message.chat.id, helpText);
+  console.log("✅ /help command handled successfully");
 }
 
 async function handleMenu(botToken: string, message: TelegramMessage) {
+  console.log("📋 Handling /menu command for user:", message.from.id);
+
   const menuText = `📱 <b>Main Menu</b>
 
 Choose an option:
@@ -126,9 +143,16 @@ Choose an option:
 Reply with your choice!`;
 
   await sendMessage(botToken, message.chat.id, menuText);
+  console.log("✅ /menu command handled successfully");
 }
 
 async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
+  console.log("💾 Saving user to database:", {
+    userId: message.from.id,
+    username: message.from.username,
+    firstName: message.from.first_name,
+  });
+
   try {
     const { data: botData } = await supabase
       .from("bot_tokens")
@@ -139,9 +163,11 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
     const owner_id = botData?.user_id;
 
     if (!owner_id) {
-      console.error("Bot owner not found for this token");
+      console.error("❌ Bot owner not found for this token");
       return;
     }
+
+    console.log("👤 Bot owner ID:", owner_id);
 
     const { data: existingUser } = await supabase
       .from("bot_users")
@@ -155,6 +181,7 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
     const nowIso = new Date().toISOString();
 
     if (existingUser) {
+      console.log("🔄 Updating existing user:", existingUser.id);
       await supabase
         .from("bot_users")
         .update({
@@ -165,6 +192,7 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
         })
         .eq("id", existingUser.id);
     } else {
+      console.log("➕ Creating new user");
       const { data: newUser, error: insertError } = await supabase
         .from("bot_users")
         .insert({
@@ -185,12 +213,15 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
         .single();
 
       if (insertError) {
-        console.error("Insert user error:", insertError);
+        console.error("❌ Insert user error:", insertError);
+      } else {
+        console.log("✅ New user created:", newUser?.id);
       }
       botUserId = newUser?.id;
     }
 
     if (botUserId) {
+      console.log("📝 Logging user interaction");
       await supabase.from("user_interactions").insert({
         bot_user_id: botUserId,
         interaction_type: "message",
@@ -201,9 +232,10 @@ async function saveUserToDatabase(message: TelegramMessage, botToken: string) {
           date: message.date,
         },
       });
+      console.log("✅ User interaction logged");
     }
   } catch (error) {
-    console.error("Save user error:", error);
+    console.error("❌ Save user error:", error);
   }
 }
 
@@ -220,6 +252,12 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
     return false;
   }
 
+  console.log("🛡️ Checking moderation for message:", {
+    chatId: message.chat.id,
+    userId: message.from.id,
+    text: message.text.substring(0, 50),
+  });
+
   try {
     const { data: group, error: groupError }: any = await supabase
       .from("bot_groups")
@@ -229,14 +267,24 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
 
     if (groupError || !group) {
       if (groupError && groupError.code !== "PGRST116") {
-        console.error("Group lookup error:", groupError);
+        console.error("❌ Group lookup error:", groupError);
+      } else {
+        console.log("ℹ️ Group not found in database, skipping moderation");
       }
       return false;
     }
 
+    console.log("🔍 Found group:", group.title);
+
     const groupId = group.id as string;
 
     const { data: settings } = await moderationService.getModerationSettings(groupId);
+    console.log("⚙️ Moderation settings:", {
+      autoDelete: settings?.auto_delete_enabled,
+      autoKick: settings?.auto_kick_enabled,
+      autoBan: settings?.auto_ban_enabled,
+    });
+
     const autoDelete = settings?.auto_delete_enabled ?? false;
     const autoKick = settings?.auto_kick_enabled ?? false;
     const autoBan = settings?.auto_ban_enabled ?? false;
@@ -249,13 +297,18 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
     );
 
     if (!hasBannedWord || !matchedWord) {
+      console.log("✅ No banned words detected");
       return false;
     }
+
+    console.log("⚠️ Banned word detected:", matchedWord.word);
 
     const { violationCount } = await moderationService.recordViolation(
       groupId,
       message.from.id
     );
+
+    console.log("📊 Violation count:", violationCount);
 
     let performedAction = "warning";
 
@@ -265,6 +318,7 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
       matchedWord.action === "kick" ||
       matchedWord.action === "ban"
     ) {
+      console.log("🗑️ Deleting message");
       const deleteResult = await moderationService.executeAction(
         "delete",
         message.chat.id,
@@ -273,10 +327,14 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
       );
       if (deleteResult.success) {
         performedAction = "delete_message";
+        console.log("✅ Message deleted");
+      } else {
+        console.error("❌ Failed to delete message:", deleteResult.error);
       }
     }
 
     if (autoBan && violationCount >= banAfter) {
+      console.log("🚫 Banning user");
       const banResult = await moderationService.executeAction(
         "ban",
         message.chat.id,
@@ -284,8 +342,12 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
       );
       if (banResult.success) {
         performedAction = "ban";
+        console.log("✅ User banned");
+      } else {
+        console.error("❌ Failed to ban user:", banResult.error);
       }
     } else if (autoKick && violationCount >= kickAfter) {
+      console.log("👢 Kicking user");
       const kickResult = await moderationService.executeAction(
         "kick",
         message.chat.id,
@@ -293,9 +355,13 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
       );
       if (kickResult.success) {
         performedAction = "kick";
+        console.log("✅ User kicked");
+      } else {
+        console.error("❌ Failed to kick user:", kickResult.error);
       }
     }
 
+    console.log("📝 Logging moderation action");
     await moderationService.logAction(
       groupId,
       message.from.id,
@@ -308,9 +374,10 @@ async function handleModeration(message: TelegramMessage): Promise<boolean> {
       }
     );
 
+    console.log("✅ Moderation action completed:", performedAction);
     return true;
   } catch (error) {
-    console.error("Moderation handling error:", error);
+    console.error("❌ Moderation handling error:", error);
     return false;
   }
 }
@@ -320,6 +387,12 @@ async function handleContactShare(botToken: string, message: TelegramMessage) {
   if (!contact) {
     return;
   }
+
+  console.log("📱 Handling contact share:", {
+    phoneNumber: contact.phone_number,
+    firstName: contact.first_name,
+    userId: contact.user_id,
+  });
 
   try {
     const { data: botData } = await supabase
@@ -331,13 +404,15 @@ async function handleContactShare(botToken: string, message: TelegramMessage) {
     const owner_id = botData?.user_id;
 
     if (!owner_id) {
-      console.error("Bot owner not found for this token (contact share)");
+      console.error("❌ Bot owner not found for this token (contact share)");
       return;
     }
 
     const telegramUserId = contact.user_id || message.from.id;
     const fullName = `${contact.first_name} ${contact.last_name || ""}`.trim();
     const nowIso = new Date().toISOString();
+
+    console.log("🔍 Looking for existing user:", telegramUserId);
 
     const { data: existingUser, error: existingError } = await supabase
       .from("bot_users")
@@ -347,6 +422,7 @@ async function handleContactShare(botToken: string, message: TelegramMessage) {
       .single();
 
     if (!existingError && existingUser) {
+      console.log("🔄 Updating existing user with phone number");
       await supabase
         .from("bot_users")
         .update({
@@ -361,7 +437,9 @@ async function handleContactShare(botToken: string, message: TelegramMessage) {
           updated_at: nowIso,
         })
         .eq("id", existingUser.id);
+      console.log("✅ User updated with phone number");
     } else {
+      console.log("➕ Creating new user with phone number");
       await supabase.from("bot_users").insert({
         owner_id,
         user_id: telegramUserId,
@@ -382,6 +460,7 @@ async function handleContactShare(botToken: string, message: TelegramMessage) {
         created_at: nowIso,
         updated_at: nowIso,
       });
+      console.log("✅ New user created with phone number");
     }
 
     await sendMessage(
@@ -390,55 +469,96 @@ async function handleContactShare(botToken: string, message: TelegramMessage) {
       "✅ Thank you! Your phone number has been recorded.\n\nYou can update it anytime by sharing your contact again."
     );
   } catch (error) {
-    console.error("Error handling contact share:", error);
+    console.error("❌ Error handling contact share:", error);
   }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log("Webhook endpoint called:", req.method, req.url);
+  console.log("\n========================================");
+  console.log("🔔 WEBHOOK ENDPOINT CALLED");
+  console.log("========================================");
+  console.log("Method:", req.method);
+  console.log("URL:", req.url);
+  console.log("Headers:", JSON.stringify(req.headers, null, 2));
+  console.log("Query params:", req.query);
+  console.log("Body:", JSON.stringify(req.body, null, 2));
+  console.log("========================================\n");
 
   if (req.method !== "POST") {
+    console.log("❌ Method not allowed:", req.method);
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const update: TelegramUpdate = req.body;
 
+    console.log("📦 Received update:", {
+      updateId: update.update_id,
+      hasMessage: !!update.message,
+    });
+
     if (!update.message) {
+      console.log("ℹ️ No message in update, skipping");
       return res.status(200).json({ ok: true });
     }
 
     const message = update.message;
+    console.log("💬 Message details:", {
+      messageId: message.message_id,
+      from: {
+        id: message.from.id,
+        username: message.from.username,
+        firstName: message.from.first_name,
+      },
+      chat: {
+        id: message.chat.id,
+        type: message.chat.type,
+        title: message.chat.title,
+      },
+      text: message.text,
+      hasContact: !!message.contact,
+    });
 
     const botToken =
       (req.query.token as string) || (req.headers["x-telegram-bot-token"] as string);
 
+    console.log("🔑 Bot token validation:", {
+      fromQuery: !!req.query.token,
+      fromHeader: !!req.headers["x-telegram-bot-token"],
+      tokenPresent: !!botToken,
+      tokenLength: botToken?.length,
+    });
+
     if (!botToken) {
-      console.error("No bot token provided");
+      console.error("❌ No bot token provided");
       return res.status(400).json({ error: "Bot token required" });
     }
 
-    // Always ensure we track user & interactions
+    console.log("👤 Saving user to database...");
     await saveUserToDatabase(message, botToken);
 
-    // If this update contains a shared contact, handle phone capture first
     if (message.contact) {
+      console.log("📱 Contact shared, processing...");
       await handleContactShare(botToken, message);
+      console.log("✅ Webhook processing complete (contact share)");
       return res.status(200).json({ ok: true });
     }
 
-    // Apply moderation only for group text messages
+    console.log("🛡️ Checking moderation...");
     const wasModerated = await handleModeration(message);
     if (wasModerated) {
+      console.log("✅ Webhook processing complete (moderation applied)");
       return res.status(200).json({ ok: true });
     }
 
     const text = message.text?.toLowerCase().trim() || "";
 
     if (!text) {
-      // Non-text message (and not a contact) — nothing else to do
+      console.log("ℹ️ Non-text message, no further processing");
       return res.status(200).json({ ok: true });
     }
+
+    console.log("🔤 Processing text command:", text);
 
     if (text === "/start") {
       await handleStart(botToken, message);
@@ -447,6 +567,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else if (text === "/menu") {
       await handleMenu(botToken, message);
     } else {
+      console.log("💬 Echo mode - responding to user");
       const echoText = `You said: ${message.text}
 
 Try these commands:
@@ -457,9 +578,16 @@ Try these commands:
       await sendMessage(botToken, message.chat.id, echoText);
     }
 
+    console.log("✅ Webhook processing complete");
+    console.log("========================================\n");
     return res.status(200).json({ ok: true });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("\n========================================");
+    console.error("❌ WEBHOOK ERROR");
+    console.error("========================================");
+    console.error("Error:", error);
+    console.error("Stack:", error instanceof Error ? error.stack : "No stack trace");
+    console.error("========================================\n");
     return res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
     });
